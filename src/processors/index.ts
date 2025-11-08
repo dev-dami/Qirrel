@@ -1,6 +1,4 @@
-// src/processors/index.ts
-
-export * from "./normalize";
-export * from "./clean";
-export * from "./segment";
-export * from "./extract";
+export { clean } from "./clean";
+export { extract } from "./extract";
+export { normalize } from "./normalize";
+export { segment } from "./segment";
