@@ -1,10 +1,8 @@
 import type { Token } from "./Tokenizer";
 import { Tokenizer } from "./Tokenizer";
-import type { Entity, IntentResult } from "../types/index";
-
-export type PipelineComponent = (
-  input: IntentResult,
-) => IntentResult | Promise<IntentResult>;
+import { clean, extract, normalize, segment } from "../processors";
+import type { Entity, IntentResult } from "../types";
+import type { PipelineComponent } from "./types";
 
 export class Pipeline {
   private readonly components: PipelineComponent[] = [];
@@ -12,6 +10,11 @@ export class Pipeline {
 
   constructor() {
     this.tokenizer = new Tokenizer();
+    // Add default processors
+    this.use(normalize);
+    this.use(clean);
+    this.use(extract);
+    this.use(segment);
   }
 
   public use(component: PipelineComponent): this {

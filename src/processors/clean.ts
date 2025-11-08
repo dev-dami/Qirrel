@@ -1,4 +1,4 @@
-import { PipelineComponent } from "../core/pipeline";
+import type { PipelineComponent } from "../core/types";
 import { IntentResult } from "../types";
 
 export const clean: PipelineComponent = (input: IntentResult): IntentResult => {

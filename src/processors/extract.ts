@@ -1,11 +1,15 @@
-import { PipelineComponent } from "../core/pipeline";
+import type { PipelineComponent } from "../core/types";
 import { IntentResult } from "../types";
 
-export const extract: PipelineComponent = (input: IntentResult): IntentResult => {
-  // Extract entities based on patterns
+export const extract: PipelineComponent = (
+  input: IntentResult,
+): IntentResult => {
   const entityPatterns = [
     { type: "email", regex: /\b[\w.-]+@[\w.-]+\.\w{2,}\b/g },
-    { type: "phone", regex: /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g },
+    {
+      type: "phone",
+      regex: /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g,
+    },
     { type: "url", regex: /https?:\/\/[\w.-]+\.[\w.-]+(?:\/[\w.-]*)*/g },
     { type: "number", regex: /\b\d+(?:\.\d+)?\b/g },
   ];
