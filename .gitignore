@@ -147,3 +147,10 @@ pipeline-test.js
 debug-test.js
 test.js
 simple-test.js
+fast-test.js
+test-with-config.js
+test_fixes.js
+test-pipeline-no-extract.js
+minimal-test.js
+comprehensive_test.js
+final_test.js
