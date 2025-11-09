@@ -252,7 +252,6 @@ extraction:
 
 Contributions are welcome. Please see the [Contributing Guide](./CONTRIBUTING.md) for more details.
 
-Join the community on [Discord](https://discord.gg/miniparse).
 
 ---
 
