@@ -1,0 +1,10 @@
+*.html linguist-detectable=true
+*.html linguist-language=HTML
+*.yaml linguist-detectable=true
+*.yml linguist-detectable=true
+*.yaml linguist-language=YAML
+*.yml linguist-language=YAML
+docs/* linguist-documentation=false
+config/* linguist-documentation=false
+dist/* linguist-vendored
+node_modules/* linguist-vendored
