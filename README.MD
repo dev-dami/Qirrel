@@ -262,7 +262,7 @@ Contributions are welcome. Please see the [Contributing Guide](./CONTRIBUTING.md
 Planned features include:
 
 * Corrective text input: advanced cleaning and normalization.
-* LLM connector: direct integration with language model APIs.
+* LLM connector: direct integration with language model APIs (Google Gemini).
 * API endpoints: RESTful API for external services.
 * Expanded documentation: comprehensive guides and API references.
 

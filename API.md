@@ -35,6 +35,16 @@ getConfig(): MiniparseConfig
 ```
 Get the current configuration.
 
+```typescript
+getLLMAdapter(): LLMAdapter | undefined
+```
+Get the configured LLM adapter if LLM functionality is enabled.
+
+```typescript
+addLLMProcessor(processor: PipelineComponent): this
+```
+Add an LLM-based processor to the pipeline.
+
 ### ConfigLoader
 
 Utility class to load configurations from various sources.
@@ -105,6 +115,16 @@ interface MiniparseConfig {
     extractUrls: boolean;
     extractNumbers: boolean;
   };
+  llm?: {
+    enabled: boolean;
+    provider: string;
+    apiKey?: string;
+    model?: string;
+    baseUrl?: string;
+    temperature?: number;
+    maxTokens?: number;
+    timeout?: number;
+  };
 }
 ```
 
@@ -139,6 +159,156 @@ interface SpeechPatternOptions {
   detectRepetitions?: boolean;
   findStutters?: boolean;
 }
+```
+
+## LLM Integration
+
+### LLM Adapters
+
+Miniparse provides adapters for various LLM providers:
+
+#### GeminiLLMAdapter
+Adapter for Google's Gemini API.
+
+```typescript
+const adapter = new GeminiLLMAdapter({
+  apiKey: "your-api-key",
+  model: "gemini-2.5-flash",
+  temperature: 0.7,
+  maxTokens: 1024,
+  timeout: 30000
+});
+```
+
+#### GenericLLMAdapter
+Generic adapter for other LLM APIs.
+
+```typescript
+const adapter = new GenericLLMAdapter({
+  apiKey: "your-api-key",
+  model: "custom-model",
+  baseUrl: "https://your-llm-api.com/v1",
+  temperature: 0.7,
+  maxTokens: 1024,
+  timeout: 30000
+});
+```
+
+#### LLMAdapterFactory
+Factory class to create LLM adapters.
+
+```typescript
+const adapter = LLMAdapterFactory.create({
+  apiKey: "your-api-key",
+  model: "gpt-3.5-turbo"
+}, "openai");
+```
+
+### LLM Response
+```typescript
+interface LLMResponse {
+  content: string;
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+  };
+  model?: string;
+}
+```
+
+### LLM Configuration
+```typescript
+interface LLMConfig {
+  apiKey: string;
+  model: string;
+  baseUrl?: string;
+  temperature?: number;
+  maxTokens?: number;
+  timeout?: number;
+}
+```
+
+### LLM Caching
+
+Miniparse provides caching for LLM responses to reduce API costs and improve performance.
+
+```typescript
+const cache = new LLMCache({
+  maxEntries: 1000,
+  ttl: 300000 // 5 minutes in milliseconds
+});
+```
+
+### LLM Processors
+
+#### createLLMProcessor
+Creates a generic LLM processor.
+
+```typescript
+const llmProcessor = createLLMProcessor({
+  promptTemplate: "Analyze the sentiment of this text: {text}",
+  adapter: yourLLMAdapter
+});
+```
+
+#### createLLMEntityExtractor
+Creates an LLM-based entity extractor.
+
+```typescript
+const entityExtractor = createLLMEntityExtractor(
+  "Extract named entities from the following text:",
+  yourLLMAdapter
+);
+```
+
+#### createLLMSummarizer
+Creates an LLM-based text summarizer.
+
+```typescript
+const summarizer = createLLMSummarizer(
+  yourLLMAdapter,
+  { temperature: 0.3 },
+  100 // max summary length
+);
+```
+
+#### createLLMSentimentAnalyzer
+Creates an LLM-based sentiment analyzer.
+
+```typescript
+const sentimentAnalyzer = createLLMSentimentAnalyzer(
+  yourLLMAdapter,
+  { temperature: 0 }
+);
+```
+
+#### createLLMIntentClassifier
+Creates an LLM-based intent classifier.
+
+```typescript
+const intentClassifier = createLLMIntentClassifier(
+  yourLLMAdapter,
+  ["question", "statement", "command", "greeting"]
+);
+```
+
+#### createLLMTopicClassifier
+Creates an LLM-based topic classifier.
+
+```typescript
+const topicClassifier = createLLMTopicClassifier(
+  yourLLMAdapter
+);
+```
+
+#### createLLMTextEnhancer
+Creates an LLM-based text enhancer.
+
+```typescript
+const textEnhancer = createLLMTextEnhancer(
+  yourLLMAdapter
+);
 ```
 
 ## Processors
@@ -182,4 +352,12 @@ extraction:
   extractPhones: true
   extractUrls: true
   extractNumbers: true
+
+llm:
+  enabled: false
+  provider: openai
+  model: gpt-3.5-turbo
+  temperature: 0.7
+  maxTokens: 1024
+  timeout: 30000
 ```
