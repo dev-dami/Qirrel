@@ -35,6 +35,43 @@ export const extract: PipelineComponent = (
   return input;
 };
 
+// Individual extraction functions that can be used separately
+export const extractEmailsOnly: PipelineComponent = (input: IntentResult): IntentResult => {
+  try {
+    extractEmails(input);
+  } catch (e) {
+    console.warn('Email extraction failed:', e);
+  }
+  return input;
+};
+
+export const extractPhonesOnly: PipelineComponent = (input: IntentResult): IntentResult => {
+  try {
+    extractPhones(input);
+  } catch (e) {
+    console.warn('Phone extraction failed:', e);
+  }
+  return input;
+};
+
+export const extractUrlsOnly: PipelineComponent = (input: IntentResult): IntentResult => {
+  try {
+    extractUrls(input);
+  } catch (e) {
+    console.warn('URL extraction failed:', e);
+  }
+  return input;
+};
+
+export const extractNumbersOnly: PipelineComponent = (input: IntentResult): IntentResult => {
+  try {
+    extractNumbers(input);
+  } catch (e) {
+    console.warn('Number extraction failed:', e);
+  }
+  return input;
+};
+
 function extractEmails(input: IntentResult): void {
   const text = input.text;
   // Simple and safe email extraction without complex loops
