@@ -1,6 +1,6 @@
 {
   "name": "dd-miniparse",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "description": "Miniparse is a work-in-progress sophisticated and extensible NLP library for comprehensive text processing, tokenization, and analysis.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -41,7 +41,6 @@
   "files": [
     "dist/**/*",
     "README.MD",
-    "docs",
     "default.yaml",
     "LICENSE"
   ],
