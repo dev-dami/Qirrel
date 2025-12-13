@@ -1,100 +1,96 @@
-# Miniparse
+# Qirrel
 
 <div align="center">
 
-[![NPM downloads](https://img.shields.io/npm/dm/devdami-miniparse.svg?style=flat)](https://www.npmjs.com/package/dd-miniparse)
-[![TypeScript](https://img.shields.io/badge/Built%20with-TypeScript-blue)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-
+[![NPM Version](https://img.shields.io/npm/v/qirrel.svg)](https://www.npmjs.com/package/qirrel)
+[![NPM Downloads](https://img.shields.io/npm/dm/qirrel.svg)](https://www.npmjs.com/package/qirrel)
+[![License](https://img.shields.io/npm/l/qirrel.svg)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 </div>
 
-Miniparse is a sophisticated and extensible NLP library for comprehensive text processing, tokenization, and analysis. It offers a modular pipeline, advanced YAML configuration, and powerful LLM integration with Google Gemini.
+Sophisticated NLP library for comprehensive text processing, tokenization, and analysis with LLM integration.
 
-**IMPORTANT: This library is currently a work in progress. Users should expect:**
-* **Potential bugs and stability issues.**
-* **API changes between versions.**
-* **Performance concerns with large datasets.**
-* **Incomplete documentation for newer features.**
-* **Experimental features that may not be ready for production.**
-
----
-
-### Table of Contents
-
-* [Quick start](#quick-start)
-* [Install](#install)
-* [Core features](#core-features)
-* [Documentation](#documentation)
-* [Contributing](#contributing)
-* [License](#license)
-* [Future plans](#future-plans)
-
----
+[GitHub](https://github.com/dev-dami/qirrel) | [NPM](https://www.npmjs.com/package/qirrel) | Author: [Damilare Osibanjo](https://github.com/dev-dami)
 
 ## Quick Start
 
-To get started with Miniparse, create a new project and install the necessary packages:
-
 ```bash
-mkdir my-miniparse-app
-cd my-miniparse-app
-npm init -y
-npm install dd-miniparse @google/generative-ai
+npm install qirrel
 ```
 
-You can then import and use Miniparse in your application. For detailed usage examples, please refer to the [Usage Examples](./docs/examples.md) documentation.
+### Extract Multiple Entity Types
 
----
-
-## Install
-
-To install Miniparse in an existing project:
-
-```bash
-npm i dd-miniparse @google/generative-ai
+```ts
+import { processText } from 'qirrel';
+const result = await processText('Contact John at john@example.com or call +1-555-123-4567');
+console.log(result.entities);
+// [
+//   { type: 'email', value: 'john@example.com', ... },
+//   { type: 'phone', value: '+1-555-123-4567', ... }
+// ]
 ```
 
----
+### Extract URLs and Numbers
 
-## Core Features
+```ts
+import { processText } from 'qirrel';
+const result = await processText('Visit https://example.com for more info. Price: $29.99');
+console.log(result.entities);
+// [
+//   { type: 'url', value: 'https://example.com', ... },
+//   { type: 'number', value: '29.99', ... }
+// ]
+```
 
-*   **Comprehensive Text Processing:** Includes tokenization, normalization, and advanced analysis capabilities.
-*   **Highly Configurable:** Utilizes a flexible YAML-based system for extensive customization.
-*   **Performance-Oriented:** Designed for efficient string parsing with minimal computational overhead.
-*   **Speech Analysis:** Tools to identify filler words, repetitions, and stutters in transcribed text.
-*   **Modular Pipeline Architecture:** Supports an extensible processing pipeline with various processor types.
-*   **Full TypeScript Support:** Provides detailed type definitions for an enhanced development experience.
-*   **LLM Integration:** Built-in support for Google Gemini API, featuring caching, fallbacks, and diverse processor types.
+### Advanced Pipeline Usage
 
----
+```ts
+import { Pipeline } from 'qirrel';
+const pipeline = new Pipeline();
+const result = await pipeline.process('Check out https://github.com and email support@example.com');
+console.log(result.entities);
+```
+
+## LLM Integration
+
+Connect to large language models for enhanced text analysis:
+
+```ts
+import { Pipeline } from 'qirrel';
+
+// Enable LLM in your config
+const pipeline = new Pipeline('./config-with-llm.yaml');
+const llmAdapter = pipeline.getLLMAdapter();
+
+if (llmAdapter) {
+  // Use LLM for advanced analysis
+  const response = await llmAdapter.generateContent('Analyze this text...');
+  console.log(response);
+}
+```
+
+## Use Cases
+
+Qirrel is perfect for developers building solutions for:
+
+- **Business Applications**: Extract customer contact details, lead generation from documents, document processing for legal/medical/financial use cases
+- **Social Media Analysis**: Process social content for mentions, hashtags, links, and user-generated content patterns
+- **Research & Content**: Extract structured data from academic papers, news articles, or documentation
+- **Data Processing**: Unstructured data extraction, log file analysis, preprocessing for ML pipelines
+- **Communication Tools**: Email processing, chat applications, content moderation
 
 ## Documentation
-
-For comprehensive details, guides, and examples, please refer to the dedicated documentation files:
-
-*   **[API Documentation](./docs/api.md)**: Detailed reference for all Miniparse APIs, including top-level functions, core classes, and types.
-*   **[Configuration Guide](./docs/configuration.md)**: Explains all available configuration options and how to customize the Miniparse pipeline.
-*   **[Usage Examples](./docs/examples.md)**: Practical code examples demonstrating various use cases, including basic processing, LLM integration, speech analysis, and API integration.
-*   **[Code Walkthrough](./docs/walkthrough.md)**: Insights into the architecture and implementation details of the Miniparse library.
-
----
+- [API Reference](./docs/api.md)
+- [Configuration Guide](./docs/configuration.md)
+- [Usage Examples](./docs/examples.md)
+- [Code Walkthrough](./docs/walkthrough.md)
+- [Basic Usage](./docs/usage/basic.md)
+- [Advanced Usage](./docs/usage/advanced.md)
+- [LLM Integration](./docs/integrations/llm.md)
 
 ## Contributing
-
-Contributions are welcome. Please see the [Contributing Guide](./CONTRIBUTING.md) for more details.
-
----
-
-## Future Plans
-
-### Version 0.2.0: Improved Text Processing and LLM Integration
-
-Planned features include:
-*   Improved LLM integration: support for more models and providers
-*   Expanded documentation: guides and API references
----
+We welcome contributions from the community! Please read our [Contributing Guide](./docs/contributing.md) for more information.
 
 ## License
-
-Licensed under the [MIT License](./LICENSE) © 2025.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

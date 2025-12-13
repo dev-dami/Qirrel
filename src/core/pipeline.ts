@@ -1,4 +1,3 @@
-import type { Token } from "./Tokenizer";
 import { Tokenizer } from "./Tokenizer";
 import {
   clean,
@@ -47,21 +46,22 @@ export class Pipeline {
 
     // Initialize LLM adapter if LLM functionality is enabled
     if (this.config.llm?.enabled && this.config.llm.apiKey) {
-      try {
-        this.llmAdapter = LLMAdapterFactory.create(
-          {
-            apiKey: this.config.llm.apiKey, // This is guaranteed to exist due to the condition above
-            model: this.config.llm.model || "gemini-2.5-flash", // Provide default model
-            baseUrl: this.config.llm.baseUrl,
-            temperature: this.config.llm.temperature,
-            maxTokens: this.config.llm.maxTokens,
-            timeout: this.config.llm.timeout,
-          },
-          this.config.llm.provider
-        );
-      } catch (error) {
+      // Initialize LLM adapter asynchronously
+      LLMAdapterFactory.create(
+        {
+          apiKey: this.config.llm.apiKey, // This is guaranteed to exist due to the condition above
+          model: this.config.llm.model || "gemini-2.5-flash", // Provide default model
+          baseUrl: this.config.llm.baseUrl,
+          temperature: this.config.llm.temperature,
+          maxTokens: this.config.llm.maxTokens,
+          timeout: this.config.llm.timeout,
+        },
+        this.config.llm.provider,
+      ).then(adapter => {
+        this.llmAdapter = adapter;
+      }).catch(error => {
         console.warn("Failed to initialize LLM adapter:", error);
-      }
+      });
     }
   }
 

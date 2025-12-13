@@ -1,21 +1,26 @@
-# Miniparse Configuration
+# Configuration Guide
 
-## Overview
+Qirrel offers extensive configuration options to customize the text processing pipeline according to your specific needs. This guide details all available configuration options and how to use them effectively.
 
-Miniparse provides a flexible configuration system that allows you to customize the behavior of the text processing pipeline. Configuration can be specified through:
+## Using Configuration Files
 
-1. **YAML configuration files** - The primary method
-2. **Programmatic configuration** - Loading configs in code
-3. **Default configuration** - Built-in settings when no custom config is provided
+Qirrel supports YAML configuration files that allow you to define processing behaviors without changing your code. To use a configuration file, pass its path when creating a Pipeline instance:
 
-## YAML Configuration
+```ts
+import { Pipeline } from 'qirrel';
 
-The recommended way to configure Miniparse is with a YAML file named `miniparse.config.yaml` in your project root. The Pipeline will automatically load this file if present.
+// Use a custom configuration file
+const pipeline = new Pipeline('./path/to/config.yaml');
 
-### Basic Configuration File
+// Or let Qirrel look for the default 'default.yaml' file
+const pipeline = new Pipeline(); // Looks for default.yaml in cwd
+```
+
+## Default Configuration
+
+The default configuration includes sensible settings for most use cases:
 
 ```yaml
-# miniparse.config.yaml
 pipeline:
   enableNormalization: true
   enableCleaning: true
@@ -41,176 +46,118 @@ extraction:
 llm:
   enabled: false
   provider: gemini
+  model: gemini-2.5-flash
+  temperature: 0.7
+  maxTokens: 1024
+  timeout: 30000
 ```
 
 ## Configuration Sections
 
-### Pipeline Configuration
+### Pipeline Configuration (`pipeline`)
 
-The `pipeline` section controls which processing components are enabled:
+Controls which processing stages are enabled in the default pipeline:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| enableNormalization | boolean | true | Enables text normalization (case conversion, number formatting) |
-| enableCleaning | boolean | true | Enables cleaning of punctuation and whitespace tokens |
-| enableExtraction | boolean | true | Enables entity extraction (emails, phones, urls, numbers) |
-| enableSegmentation | boolean | true | Enables text segmentation into sentences |
-| enableAdvCleaning | boolean | false | Enables advanced cleaning with more sophisticated rules |
+- `enableNormalization`: When `true`, applies text normalization (converting abbreviations, etc.)
+- `enableCleaning`: When `true`, removes punctuation and whitespace tokens
+- `enableExtraction`: When `true`, enables entity extraction (emails, phones, etc.)
+- `enableSegmentation`: When `true`, segments text into logical sections
+- `enableAdvCleaning`: When `true`, performs advanced cleaning operations
 
-### Tokenizer Configuration
+### Tokenizer Configuration (`tokenizer`)
 
-The `tokenizer` section configures how text is broken into tokens:
+Controls how the tokenizer processes text:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| lowercase | boolean | true | Convert word tokens to lowercase |
-| mergeSymbols | boolean | false | Merge consecutive symbol tokens into single tokens |
+- `lowercase`: When `true`, converts word tokens to lowercase
+- `mergeSymbols`: When `true`, combines consecutive symbol characters into single tokens
 
-### Speech Configuration
+### Speech Analysis Configuration (`speech`)
 
-The `speech` section controls speech pattern analysis:
+Features designed for processing transcribed speech:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| removeFillerWords | boolean | true | Remove common filler words (um, uh, like, etc.) |
-| detectRepetitions | boolean | false | Detect and remove repeated words |
-| findStutters | boolean | false | Detect and fix stuttered words |
+- `removeFillerWords`: When `true`, identifies and handles common filler words
+- `detectRepetitions`: When `true`, detects repeated words or phrases
+- `findStutters`: When `true`, identifies stuttering patterns in text
 
-### Extraction Configuration
+### Extraction Configuration (`extraction`)
 
-The `extraction` section controls which entity types are extracted:
+Controls which entity types are extracted from text:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| extractEmails | boolean | true | Extract email addresses from text |
-| extractPhones | boolean | true | Extract phone numbers from text |
-| extractUrls | boolean | true | Extract URLs from text |
-| extractNumbers | boolean | true | Extract numbers from text |
+- `extractEmails`: Enable/disable email address extraction
+- `extractPhones`: Enable/disable phone number extraction
+- `extractUrls`: Enable/disable URL extraction
+- `extractNumbers`: Enable/disable numeric value extraction
 
-### LLM Configuration
+### LLM Configuration (`llm`)
 
-The `llm` section configures Large Language Model integration:
+Settings for optional Large Language Model integration:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| enabled | boolean | false | Enable LLM functionality |
-| provider | string | "gemini" | LLM provider (currently supports "gemini") |
-| apiKey | string | - | Your LLM API key |
-| model | string | "gemini-2.5-flash" | LLM model to use |
-| temperature | number | - | Temperature setting for LLM generation |
-| maxTokens | number | - | Maximum tokens for LLM responses |
-| timeout | number | - | Request timeout in milliseconds |
+- `enabled`: When `true`, enables LLM features
+- `provider`: Specifies the LLM provider ('gemini' is currently supported)
+- `apiKey`: Your LLM service API key (optional, can be set via environment)
+- `model`: The specific model to use (e.g., 'gemini-2.5-flash')
+- `temperature`: Controls randomness in LLM output (0.0 to 1.0)
+- `maxTokens`: Maximum number of tokens in LLM response
+- `timeout`: Request timeout in milliseconds
 
-## Programmatic Configuration
+## Creating Custom Configurations
 
-You can also load configurations programmatically:
+You can create custom configuration files to adjust Qirrel's behavior for specific use cases. For example, to create a configuration that focuses only on entity extraction:
 
-```typescript
-import { ConfigLoader } from 'miniparse';
-
-// Load configuration from a specific file
-const config = ConfigLoader.loadConfig('./path/to/config.yaml');
-
-// Create pipeline with the loaded config
-const pipeline = new Pipeline('./path/to/config.yaml');
-```
-
-## Configuration Loading Priority
-
-Miniparse follows this priority order when loading configurations:
-
-1. **Custom config path** - If provided to the Pipeline constructor
-2. **Local config file** - `miniparse.config.yaml` in the current working directory
-3. **Default config** - Built-in default configuration
-
-## Example Configurations
-
-### Minimal Configuration (Fastest)
 ```yaml
-# For maximum performance, disable unnecessary features
 pipeline:
-  enableNormalization: true
+  enableNormalization: false
   enableCleaning: false
-  enableExtraction: false
+  enableExtraction: true
   enableSegmentation: false
   enableAdvCleaning: false
 
+extraction:
+  extractEmails: true
+  extractPhones: true
+  extractUrls: true
+  extractNumbers: true
+
 tokenizer:
   lowercase: true
-  mergeSymbols: false
-
-speech:
-  removeFillerWords: false
-  detectRepetitions: false
-  findStutters: false
-
-extraction:
-  extractEmails: false
-  extractPhones: false
-  extractUrls: false
-  extractNumbers: false
-
-llm:
-  enabled: false
-  provider: gemini
 ```
 
-### Speech Processing Configuration
+Or a configuration optimized for speech processing:
+
 ```yaml
-# For processing speech-to-text output
-pipeline:
-  enableNormalization: true
-  enableCleaning: true
-  enableExtraction: false
-  enableSegmentation: true
-  enableAdvCleaning: true
-
-tokenizer:
-  lowercase: true
-  mergeSymbols: false
-
 speech:
   removeFillerWords: true
   detectRepetitions: true
   findStutters: true
 
-extraction:
-  extractEmails: false
-  extractPhones: false
-  extractUrls: false
-  extractNumbers: false
-
-llm:
-  enabled: false
-  provider: gemini
-```
-
-### Entity Extraction Configuration
-```yaml
-# For extracting structured data
 pipeline:
   enableNormalization: true
   enableCleaning: true
-  enableExtraction: true
-  enableSegmentation: false
-  enableAdvCleaning: false
-
-tokenizer:
-  lowercase: true
-  mergeSymbols: false
-
-speech:
-  removeFillerWords: false
-  detectRepetitions: false
-  findStutters: false
-
-extraction:
-  extractEmails: true
-  extractPhones: true
-  extractUrls: true
-  extractNumbers: true
-
-llm:
-  enabled: false
-  provider: gemini
+  enableExtraction: false
+  enableSegmentation: true
 ```
+
+## Programmatic Configuration
+
+You can also work with configurations programmatically:
+
+```ts
+import { Pipeline } from 'qirrel';
+
+const pipeline = new Pipeline();
+const config = pipeline.getConfig();
+
+// Modify configuration programmatically
+config.pipeline.enableExtraction = false;
+config.extraction.extractEmails = true;
+```
+
+## Environment Variables for LLM
+
+When using LLM features, you can set your API key through environment variables:
+
+```bash
+export QIRREL_LLM_API_KEY=your_api_key_here
+```
+
+The library will automatically use this value if the `apiKey` is not set directly in the configuration file.

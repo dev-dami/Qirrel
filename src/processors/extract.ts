@@ -1,5 +1,7 @@
 import type { PipelineComponent } from "../core/types";
 import { IntentResult } from "../types";
+import validator from "validator";
+import { parsePhoneNumber } from 'libphonenumber-js';
 
 export const extract: PipelineComponent = (
   input: IntentResult,
@@ -77,277 +79,130 @@ export const extractNumbersOnly: PipelineComponent = (
 
 function extractEmails(input: IntentResult): void {
   const text = input.text;
-  const processedEmails = new Set<string>();
 
-  for (let i = 0; i < text.length; i++) {
-    if (text[i] === "@") {
-      const startSearch = Math.max(0, i - 30);
-      const endSearch = Math.min(text.length, i + 30);
+  // Use validator to find and validate emails more reliably
+  // First, find potential emails using a simple pattern, then validate with library
+  const potentialEmails = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g) || [];
 
-      let start = i;
-      for (let j = i - 1; j >= startSearch; j--) {
-        const char = text[j];
-        if (char === undefined || !/[a-zA-Z0-9._%+-]/.test(char)) {
-          start = j + 1;
-          break;
-        }
-        if (j === startSearch) {
-          start = j;
-        }
-      }
-
-      let end = i;
-      for (let j = i + 1; j < endSearch; j++) {
-        const char = text[j];
-        if (char === undefined || !/[a-zA-Z0-9.-]/.test(char)) {
-          end = j;
-          break;
-        }
-        if (j === endSearch - 1) {
-          end = j + 1;
-        }
-      }
-
-      if (start < i && i < end) {
-        const potentialEmail = text.substring(start, end);
-        if (
-          isValidEmail(potentialEmail) &&
-          !processedEmails.has(potentialEmail)
-        ) {
-          input.entities.push({
-            type: "email",
-            value: potentialEmail,
-            start,
-            end,
-          });
-          processedEmails.add(potentialEmail);
-        }
+  for (const potentialEmail of potentialEmails) {
+    if (validator.isEmail(potentialEmail)) {
+      const startIndex = text.indexOf(potentialEmail);
+      if (startIndex !== -1) {
+        input.entities.push({
+          type: "email",
+          value: potentialEmail,
+          start: startIndex,
+          end: startIndex + potentialEmail.length,
+        });
       }
     }
   }
 }
 
-function isValidEmail(str: string): boolean {
-  if (!str.includes("@")) return false;
-  const parts = str.split("@");
-  if (parts.length !== 2) return false;
-
-  const [localPart, domainPart] = parts;
-  if (!localPart || !domainPart) return false;
-  if (!domainPart.includes(".")) return false;
-
-  if (!/^[a-zA-Z0-9._%+-]+$/.test(localPart)) return false;
-  if (!/^[a-zA-Z0-9.-]+$/.test(domainPart)) return false;
-
-  return true;
-}
-
 function extractPhones(input: IntentResult): void {
   const text = input.text;
-  const maxIterations = text.length;
-  let iterations = 0;
 
-  for (
-    let i = 0;
-    i < text.length && iterations < maxIterations;
-    i++, iterations++
-  ) {
-    const char = text[i];
-    if ((char && isDigit(char)) || char === "+" || char === "(") {
-      let phoneEnd = i;
-      let digitCount = 0;
-      let validPhoneChars = 0;
-      const lookAheadLimit = Math.min(text.length, i + 20);
+  // More comprehensive regex to capture various phone formats
+  const phoneRegex = /(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})|(\+?[1-9]\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9})/g;
+  let match;
 
-      while (phoneEnd < lookAheadLimit) {
-        const c = text[phoneEnd];
-        if (c && isDigit(c)) {
-          digitCount++;
-          validPhoneChars++;
-        } else if (c && ["-", ".", " ", "(", ")", "+"].includes(c)) {
-          validPhoneChars++;
-        } else {
-          break;
+  // Extract all potential phone numbers
+  const potentialPhones = [];
+  while ((match = phoneRegex.exec(text)) !== null) {
+    // Get the full matched string
+    const fullMatch = match[0];
+    potentialPhones.push({
+      number: fullMatch,
+      start: match.index,
+      end: match.index + fullMatch.length
+    });
+  }
+
+  // Validate each potential phone number using libphonenumber-js
+  for (const potential of potentialPhones) {
+    try {
+      // Try parsing with different country codes as fallback
+      let isValid = false;
+      const possibleCountries = ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'AU'] as const;
+
+      for (const country of possibleCountries) {
+        try {
+          const phoneNumber = parsePhoneNumber(potential.number, country);
+          if (phoneNumber.isValid()) {
+            isValid = true;
+            break;
+          }
+        } catch (e) {
+          // Try next country
+          continue;
         }
-        phoneEnd++;
       }
 
-      if (
-        digitCount >= 10 &&
-        digitCount <= 15 &&
-        validPhoneChars === phoneEnd - i
-      ) {
-        const potentialPhone = text.substring(i, phoneEnd);
-        const existing = input.entities.find(
-          (e) => e.value === potentialPhone && e.type === "phone",
-        );
-        if (
-          !existing &&
-          !input.entities.some(
-            (e) => e.value === potentialPhone && e.type === "phone",
-          )
-        ) {
-          input.entities.push({
-            type: "phone",
-            value: potentialPhone,
-            start: i,
-            end: phoneEnd,
-          });
+      // If still not valid, try without specifying a country
+      if (!isValid) {
+        try {
+          const phoneNumber = parsePhoneNumber(potential.number, { extract: false });
+          if (phoneNumber.isValid()) {
+            isValid = true;
+          }
+        } catch (e) {
+          // Ignore - will remain invalid
         }
-        i = phoneEnd - 1;
       }
+
+      if (isValid) {
+        input.entities.push({
+          type: "phone",
+          value: potential.number,
+          start: potential.start,
+          end: potential.end,
+        });
+      }
+    } catch (e) {
+      // If parsing fails, skip this number
+      continue;
     }
   }
 }
 
 function extractUrls(input: IntentResult): void {
   const text = input.text;
-  const protocols = ["http://", "https://"];
 
-  for (const protocol of protocols) {
-    let searchStart = 0;
-    while (searchStart < text.length) {
-      const protocolIndex = text.indexOf(protocol, searchStart);
-      if (protocolIndex === -1) break;
+  // Find potential URLs by looking for common protocol prefixes
+  const urlPattern = /(https?:\/\/[^\s"'<>\]]+)/g;
+  let match;
 
-      let urlEnd = protocolIndex + protocol.length;
-      while (urlEnd < text.length) {
-        const char = text[urlEnd];
-        if (
-          char === undefined ||
-          [
-            " ",
-            "\n",
-            "\r",
-            "\t",
-            "<",
-            ">",
-            "(",
-            ")",
-            "[",
-            "]",
-            "{",
-            "}",
-          ].includes(char)
-        ) {
-          break;
-        }
-        urlEnd++;
-      }
-
-      const url = text.substring(protocolIndex, urlEnd);
-      if (url && isValidUrl(url)) {
-        input.entities.push({
-          type: "url",
-          value: url,
-          start: protocolIndex,
-          end: urlEnd,
-        });
-      }
-
-      searchStart = urlEnd > searchStart ? urlEnd : searchStart + 1;
+  while ((match = urlPattern.exec(text)) !== null) {
+    const url = match[0];
+    // Use validator to properly validate the URL
+    if (validator.isURL(url, { protocols: ['http', 'https'], require_protocol: true })) {
+      input.entities.push({
+        type: "url",
+        value: url,
+        start: match.index,
+        end: match.index + url.length,
+      });
     }
   }
-}
-
-function isValidUrl(url: string): boolean {
-  const parts = url.split("://");
-  if (parts.length !== 2) return false;
-
-  const protocol = parts[0];
-  const path = parts[1];
-
-  if (!protocol || !path || !["http", "https"].includes(protocol)) return false;
-
-  const domainPath = path.split("/")[0];
-  if (!domainPath) return false;
-
-  const domainParts = domainPath.split(".");
-  if (domainParts.length < 2) return false;
-
-  for (const part of domainParts) {
-    if (!part || !/^[a-zA-Z0-9-]+$/.test(part)) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function extractNumbers(input: IntentResult): void {
   const text = input.text;
-  let i = 0;
 
-  while (i < text.length) {
-    while (i < text.length) {
-      const currentChar = text[i];
-      if (
-        currentChar !== undefined &&
-        (isDigit(currentChar) || currentChar === ".")
-      ) {
-        break;
-      }
-      i++;
-    }
+  // Find potential numbers using a regex
+  const numberPattern = /-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/g;
+  let match;
 
-    if (i >= text.length) break;
-
-    let start = i;
-    let hasDecimal = false;
-    let validNumber = false;
-
-    while (i < text.length) {
-      const char = text[i];
-      if (char === undefined) {
-        break;
-      }
-
-      if (isDigit(char)) {
-        validNumber = true;
-        i++;
-      } else if (char === "." && !hasDecimal) {
-        const prevChar = text[i - 1];
-        const nextChar = text[i + 1];
-        if (
-          i > 0 &&
-          prevChar !== undefined &&
-          isDigit(prevChar) &&
-          i < text.length - 1 &&
-          nextChar !== undefined &&
-          isDigit(nextChar)
-        ) {
-          hasDecimal = true;
-          validNumber = true;
-          i++;
-        } else {
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-
-    if (i > start && validNumber) {
-      const numberValue = text.substring(start, i);
-      if (isNumber(numberValue)) {
-        input.entities.push({
-          type: "number",
-          value: numberValue,
-          start,
-          end: i,
-        });
-      }
-    } else if (i === start) {
-      i++;
+  while ((match = numberPattern.exec(text)) !== null) {
+    const numStr = match[0];
+    // Validate using both validator and built-in parsing
+    if (validator.isNumeric(numStr) || (!isNaN(parseFloat(numStr)) && isFinite(parseFloat(numStr)))) {
+      input.entities.push({
+        type: "number",
+        value: numStr,
+        start: match.index,
+        end: match.index + numStr.length,
+      });
     }
   }
-}
-
-function isDigit(char: string | undefined): boolean {
-  if (char === undefined) return false;
-  return char >= "0" && char <= "9";
-}
-
-function isNumber(str: string): boolean {
-  return !isNaN(parseFloat(str)) && isFinite(parseFloat(str));
 }

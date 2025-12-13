@@ -36,10 +36,11 @@ export class Tokenizer {
     let currentType: TokenType = "unknown";
 
     for (let i = 0; i < len; i++) {
-      const ch = text.charAt(i);
-      const type = this.classify(ch);
+      const ch = text[i]!;
+      const code = ch.codePointAt(0)!;
+      const type = this.classifyOptimized(code, ch);
 
-      if (type !== currentType || this.isBoundary(type, currentType, ch)) {
+      if (type !== currentType || this.isBoundaryOptimized(type, currentType)) {
         if (current.length > 0) {
           tokens.push({
             value:
@@ -74,49 +75,36 @@ export class Tokenizer {
     return tokens;
   }
 
-  private classify(ch: string): TokenType {
-    const code = ch.codePointAt(0)!;
-    if (this.isLetter(code)) return "word";
-    if (this.isDigit(code)) return "number";
-    if (this.isWhitespace(code)) return "whitespace";
-    if (this.isPunct(ch)) return "punct";
-    if (this.isSymbol(code)) return "symbol";
+  private classifyOptimized(code: number, ch: string): TokenType {
+    if (
+      (code >= 65 && code <= 90) ||  // A-Z
+      (code >= 97 && code <= 122) || // a-z
+      (code >= 128 && code <= 591)   // Extended Latin
+    ) {
+      return "word";
+    }
+    if (code >= 48 && code <= 57) { // 0-9
+      return "number";
+    }
+    if (code === 32 || code === 9 || code === 10 || code === 13) { // whitespace
+      return "whitespace";
+    }
+    if (",.!?;:()[]{}\"'`".includes(ch)) {
+      return "punct";
+    }
+    if (
+      (code >= 33 && code <= 47) ||  // !"#$%&'()*+,-./
+      (code >= 58 && code <= 64) ||  // :;<=>?@
+      (code >= 91 && code <= 96) ||  // [\]^_`
+      (code >= 123 && code <= 126) || // {|}~
+      (code >= 8200 && code <= 129999) // Extended symbols
+    ) {
+      return "symbol";
+    }
     return "unknown";
   }
 
-  private isLetter(code: number): boolean {
-    return (
-      (code >= 65 && code <= 90) ||
-      (code >= 97 && code <= 122) ||
-      (code >= 128 && code <= 591)
-    );
-  }
-
-  private isDigit(code: number): boolean {
-    return code >= 48 && code <= 57;
-  }
-
-  private isWhitespace(code: number): boolean {
-    return code === 32 || code === 9 || code === 10 || code === 13;
-  }
-
-  private isPunct(ch: string): boolean {
-    return ".,!?;:()[]{}\"'`".includes(ch);
-  }
-
-  private isSymbol(code: number): boolean {
-    return (
-      (code >= 33 && code <= 47) ||
-      (code >= 58 && code <= 64) ||
-      (code >= 91 && code <= 96) ||
-      (code >= 123 && code <= 126) ||
-      (code >= 8200 && code <= 129999)
-    );
-  }
-
-  private isBoundary(next: TokenType, prev: TokenType, ch: string): boolean {
-    if (next !== prev) return true;
-    if (next === "symbol" && !this.options.mergeSymbols) return true;
-    return false;
+  private isBoundaryOptimized(next: TokenType, prev: TokenType): boolean {
+    return next !== prev || (next === "symbol" && !this.options.mergeSymbols);
   }
 }

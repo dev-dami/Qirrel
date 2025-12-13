@@ -1,129 +1,170 @@
-# miniparse API Documentation
+# API Documentation
 
-miniparse provides a high-level `processText` function for ease of use, as well as granular control through its `Pipeline` class and other components.
+Qirrel provides a comprehensive API for text processing, tokenization, and entity extraction. This document details all available functions, classes, and types.
 
-## Top-Level Function
+## Main Functions
 
-### processText
+### `processText(text: string, configPath?: string) => Promise<IntentResult>`
+Asynchronously processes text using the default pipeline configuration. This is the simplest way to use Qirrel.
 
-```typescript
-processText(text: string, configPath?: string): Promise<IntentResult>
+**Parameters:**
+- `text: string` - The input text to process
+- `configPath?: string` - Optional path to a YAML configuration file
+
+**Returns:** Promise that resolves to an `IntentResult` object
+
+**Example:**
+```ts
+import { processText } from 'qirrel';
+const result = await processText('Contact us at info@example.com');
 ```
-Processes the given text using the miniparse pipeline. This is a convenience function that initializes a `Pipeline` and immediately processes the text.
 
-- `text`: The input string to be processed.
-- `configPath` (optional): Path to a custom configuration file.
-- Returns: A `Promise` that resolves to an `IntentResult` object containing the analysis.
+## Classes
 
-## Core Classes
+### `Pipeline`
+The core class for building custom text processing pipelines. Allows for fine-grained control over the processing workflow.
 
-### Pipeline
-
-The main processing class that orchestrates text analysis.
-
-#### Constructor
-```typescript
+**Constructor:**
+```ts
 new Pipeline(configPath?: string)
 ```
-- `configPath` (optional): Path to a custom configuration file
 
-#### Methods
-```typescript
-process(text: string): Promise<IntentResult>
+**Parameters:**
+- `configPath?: string` - Optional path to a YAML configuration file
+
+**Methods:**
+
+#### `process(text: string) => Promise<IntentResult>`
+Processes the input text through the pipeline components.
+
+#### `use(component: PipelineComponent) => this`
+Adds a processing component to the pipeline.
+
+#### `addCustomProcessor(component: PipelineComponent) => this`
+Manually adds a custom processing component to the pipeline.
+
+#### `getConfig() => MiniparseConfig`
+Retrieves the current configuration object.
+
+#### `getLLMAdapter() => LLMAdapter | undefined`
+Returns the initialized LLM adapter if available.
+
+#### `addLLMProcessor(processor: PipelineComponent) => this`
+Adds a processor that uses LLM capabilities.
+
+**Example:**
+```ts
+import { Pipeline } from 'qirrel';
+const pipeline = new Pipeline();
+const result = await pipeline.process('Hello world!');
 ```
-Process text through the pipeline and return the analysis result.
 
-```typescript
-use(component: PipelineComponent): this
-```
-Add a custom component to the pipeline.
+### `Tokenizer`
+Handles text tokenization into meaningful units (words, numbers, punctuation, symbols).
 
-```typescript
-addCustomProcessor(component: PipelineComponent): this
-```
-Add a custom processor to the pipeline (alias for `use`).
-
-```typescript
-getConfig(): DdMiniparseConfig
-```
-Get the current configuration.
-
-```typescript
-getLLMAdapter(): LLMAdapter | undefined
-```
-Get the configured LLM adapter if LLM functionality is enabled.
-
-```typescript
-addLLMProcessor(processor: PipelineComponent): this
-```
-Add an LLM-based processor to the pipeline.
-
-### Tokenizer
-
-The tokenizer that breaks text into discrete tokens.
-
-#### Constructor
-```typescript
+**Constructor:**
+```ts
 new Tokenizer(options?: TokenizerOptions)
 ```
-- `options.lowercase` (optional, default: true): Whether to convert words to lowercase
-- `options.mergeSymbols` (optional, default: false): Whether to merge consecutive symbols
 
-#### Methods
-```typescript
-tokenize(text: string): Token[]
+**Parameters:**
+- `options?: TokenizerOptions` - Configuration options for tokenization
+
+**Methods:**
+
+#### `tokenize(text: string) => Token[]`
+Converts input text into an array of Token objects.
+
+**Example:**
+```ts
+import { Tokenizer } from 'qirrel';
+const tokenizer = new Tokenizer({ lowercase: true });
+const tokens = tokenizer.tokenize('Hello World!');
 ```
-Tokenize the given text and return an array of Token objects.
 
-### ConfigLoader
+## Processors
 
-Utility class to load configurations from various sources.
+Qirrel provides several built-in processors for different text analysis tasks:
 
-#### Static Methods
-```typescript
-loadConfig(customConfigPath?: string): DdMiniparseConfig
-```
-Load configuration from the specified path or from default locations.
+### `clean`
+Removes punctuation and whitespace tokens from the tokenized text.
 
-## Core Types
+### `extract`
+Extracts various entities (emails, phones, URLs, numbers) from the text and adds them to the entities array.
 
-### IntentResult
-```typescript
+### `extractEmailsOnly`
+Extracts only email addresses from the text.
+
+### `extractPhonesOnly`
+Extracts only phone numbers from the text.
+
+### `extractUrlsOnly`
+Extracts only URLs from the text.
+
+### `extractNumbersOnly`
+Extracts only numbers from the text.
+
+### `normalize`
+Normalizes text by converting common abbreviations and symbols.
+
+### `segment`
+Segments text into logical sections or paragraphs.
+
+### `advClean`
+Performs advanced cleaning operations on the text.
+
+## Types
+
+### `IntentResult`
+Represents the output of text processing operations.
+
+```ts
 interface IntentResult {
-  text: string;
-  tokens: Token[];
-  entities: Entity[];
+  text: string;        // Original input text
+  tokens: Token[];     // Array of processed tokens
+  entities: Entity[];  // Array of extracted entities
 }
 ```
 
-### Token
-```typescript
+### `Token`
+Represents a single token in the tokenized text.
+
+```ts
 interface Token {
-  value: string;
-  type: TokenType;
-  start: number;
-  end: number;
+  value: string;    // The actual text content
+  type: TokenType;  // The category of token
+  start: number;    // Starting position in original text
+  end: number;      // Ending position in original text
 }
 ```
 
-### TokenType
-```typescript
-type TokenType = "word" | "number" | "punct" | "symbol" | "whitespace" | "unknown";
-```
+### `TokenType`
+Enumeration of possible token types:
 
-### Entity
-```typescript
+- `"word"` - Alphabetic characters
+- `"number"` - Numeric characters
+- `"punct"` - Punctuation marks
+- `"symbol"` - Special symbols
+- `"whitespace"` - Space, tab, newline characters
+- `"unknown"` - Unrecognized character types
+
+### `Entity`
+Represents an extracted entity from the text.
+
+```ts
 interface Entity {
-  type: string;
-  value: string;
-  start: number;
-  end: number;
+  type: string;     // The type of entity (email, phone, etc.)
+  value: string;    // The actual extracted content
+  start: number;    // Starting position in original text
+  end: number;      // Ending position in original text
 }
 ```
 
-### DdMiniparseConfig
-```typescript
-interface DdMiniparseConfig {
+### `MiniparseConfig`
+Configuration object that controls the behavior of the pipeline.
+
+```ts
+interface MiniparseConfig {
   pipeline: {
     enableNormalization: boolean;
     enableCleaning: boolean;
@@ -159,145 +200,19 @@ interface DdMiniparseConfig {
 }
 ```
 
-## Processors
+### `TokenizerOptions`
+Configuration options for the Tokenizer class.
 
-dd-miniparse comes with several built-in processors:
-
-### normalize
-Normalizes text tokens and entity values.
-
-### clean
-Removes punctuation and whitespace tokens, filters empty entities.
-
-### advClean
-Advanced cleaning with more sophisticated rules, implemented in `/src/processors/advclean.ts`.
-
-### extract
-Extracts structured data like emails, phones, URLs, and numbers.
-
-### segment
-Segments text into sentences.
-
-### Specialized Extractors
-- `extractEmailsOnly` - Extract only email addresses
-- `extractPhonesOnly` - Extract only phone numbers
-- `extractUrlsOnly` - Extract only URLs
-- `extractNumbersOnly` - Extract only numbers
-
-## Speech Analysis Functions
-
-### preprocessSpeechInput
-Remove speech irregularities from input text.
-
-```typescript
-preprocessSpeechInput(text: string, options?: SpeechPatternOptions): string
-```
-- `text`: Input text to process
-- `options` (optional): Configuration object for speech processing
-
-### analyzeSpeechPatterns
-Analyze text for speech patterns and return analysis.
-
-```typescript
-analyzeSpeechPatterns(text: string): {
-  fillerWords: string[];
-  repetitions: string[];
-  stutters: string[];
-}
-```
-- `text`: Input text to analyze
-- Returns: Object with detected speech patterns
-
-### SpeechPatternOptions
-```typescript
-interface SpeechPatternOptions {
-  removeFillerWords?: boolean;
-  detectRepetitions?: boolean;
-  findStutters?: boolean;
+```ts
+interface TokenizerOptions {
+  lowercase?: boolean;     // Convert alphabetic tokens to lowercase
+  mergeSymbols?: boolean;  // Merge consecutive symbol tokens
 }
 ```
 
-## LLM Integration
+### `PipelineComponent`
+Type representing a processing component that can be added to a Pipeline.
 
-### LLM Processors
-
-#### createLLMSummarizer
-Creates an LLM-based text summarizer.
-
-```typescript
-const summarizer = createLLMSummarizer(
-  yourLLMAdapter,
-  { temperature: 0.3 },
-  100 // max summary length
-);
-```
-
-#### createLLMSentimentAnalyzer
-Creates an LLM-based sentiment analyzer.
-
-```typescript
-const sentimentAnalyzer = createLLMSentimentAnalyzer(
-  yourLLMAdapter,
-  { temperature: 0 }
-);
-```
-
-#### createLLMIntentClassifier
-Creates an LLM-based intent classifier.
-
-```typescript
-const intentClassifier = createLLMIntentClassifier(
-  yourLLMAdapter,
-  ["question", "statement", "command", "greeting"]
-);
-```
-
-#### createLLMTopicClassifier
-Creates an LLM-based topic classifier.
-
-```typescript
-const topicClassifier = createLLMTopicClassifier(
-  yourLLMAdapter
-);
-```
-
-#### createLLMTextEnhancer
-Creates an LLM-based text enhancer.
-
-```typescript
-const textEnhancer = createLLMTextEnhancer(
-  yourLLMAdapter
-);
-```
-
-### Default Configuration
-
-The default configuration is:
-
-```yaml
-pipeline:
-  enableNormalization: true
-  enableCleaning: true
-  enableExtraction: true
-  enableSegmentation: true
-  enableAdvCleaning: false
-
-tokenizer:
-  lowercase: true
-  mergeSymbols: false
-
-speech:
-  removeFillerWords: true
-  detectRepetitions: false
-  findStutters: false
-
-extraction:
-  extractEmails: true
-  extractPhones: true
-  extractUrls: true
-  extractNumbers: true
-
-llm:
-  enabled: false
-  provider: gemini
+```ts
+type PipelineComponent = (input: IntentResult) => Promise<IntentResult>;
 ```

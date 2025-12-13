@@ -1,17 +1,23 @@
-import { GeminiLLMAdapter } from "./gemini";
 import { GenericLLMAdapter } from "./generic";
 import type { LLMAdapter, LLMConfig } from "./types";
 
 export class LLMAdapterFactory {
-  static create(
+  static async create(
     config: LLMConfig,
     provider: string = "gemini",
     enableCache: boolean = true,
-  ): LLMAdapter {
+  ): Promise<LLMAdapter> {
     switch (provider.toLowerCase()) {
       case "gemini":
       case "google":
-        return new GeminiLLMAdapter(config, enableCache);
+        try {
+          const { GeminiLLMAdapter } = await import("./gemini.js");
+          return new GeminiLLMAdapter(config, enableCache);
+        } catch (error) {
+          throw new Error(
+            `Gemini adapter failed to load: ${error}. Install @google/generative-ai to use Gemini: bun add @google/generative-ai`,
+          );
+        }
       case "generic":
         return new GenericLLMAdapter(config, "generic", enableCache);
       default:

@@ -1,3 +1,40 @@
+function removePunctuation(word: string): string {
+  let result = '';
+  for (let i = 0; i < word.length; i++) {
+    const char = word[i]!;
+    if (char !== '.' && char !== ',' && char !== '!' && char !== '?' && char !== ';' && char !== ':') {
+      result += char;
+    }
+  }
+  return result;
+}
+
+function splitByWhitespace(text: string): string[] {
+  const words: string[] = [];
+  let currentWord = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]!;
+
+    // Check if character is whitespace (space, tab, newline, carriage return)
+    if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+      if (currentWord.length > 0) {
+        words.push(currentWord);
+        currentWord = '';
+      }
+    } else {
+      currentWord += char;
+    }
+  }
+
+  // Don't forget the last word if text doesn't end with whitespace
+  if (currentWord.length > 0) {
+    words.push(currentWord);
+  }
+
+  return words;
+}
+
 export interface SpeechPatternOptions {
   removeFillerWords?: boolean;
   detectRepetitions?: boolean;
@@ -14,77 +51,53 @@ export function preprocessSpeechInput(
     findStutters: options?.findStutters ?? false,
   };
 
-  let result = text;
-
-  if (opts.removeFillerWords) {
-    result = removeFillerWords(result);
-  }
-
-  if (opts.detectRepetitions) {
-    result = removeRepetitions(result);
-  }
-
-  if (opts.findStutters) {
-    result = removeStutters(result);
-  }
-
-  return result.trim();
-}
-
-function removeFillerWords(text: string): string {
-  const words = text.split(/\s+/);
+  // Split text to words using our function without regex
+  const words = splitByWhitespace(text);
   const fillerWords = new Set(['um', 'umm', 'uh', 'uhh', 'like', 'you know', 'so', 'well', 'actually', 'basically', 'literally']);
-  const result: string[] = [];
+  const processedWords: string[] = [];
 
-  for (const word of words) {
-    // Check for basic filler words
-    const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
-    if (!fillerWords.has(cleanWord)) {
-      result.push(word);
-    }
-  }
-
-  return result.join(' ');
-}
-
-function removeRepetitions(text: string): string {
-  const words = text.split(/\s+/);
-  const result: string[] = [];
+  // Variables for tracking patterns during single pass
+  let prevWord: string | null = null;
+  let prevCleanWord: string | null = null;
 
   for (let i = 0; i < words.length; i++) {
-    if (!words[i]) continue;
-    if (i < words.length - 1 && words[i] && words[i + 1] &&
-        words[i]!.toLowerCase() === words[i + 1]!.toLowerCase()) {
-      continue;
-    }
-    result.push(words[i]!);
-  }
-
-  return result.join(' ');
-}
-
-function removeStutters(text: string): string {
-  const words = text.split(/\s+/);
-  const result: string[] = [];
-
-  for (const word of words) {
+    const word = words[i]!;
     if (!word) continue;
 
-    const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
-    const parts = cleanWord.split('-');
+    const cleanWord = removePunctuation(word).toLowerCase();
 
-    if (parts.length > 1) {
-      if (parts[0] && parts[1] && (parts[1].startsWith(parts[0]) || parts[0].startsWith(parts[1]))) {
-        // Keep only the complete word
-        result.push(parts[1]);
-        continue;
+    let shouldIncludeWord = true;
+
+    // Check for filler words
+    if (opts.removeFillerWords && fillerWords.has(cleanWord)) {
+      shouldIncludeWord = false;
+    }
+
+    // Check for repetitions
+    if (opts.detectRepetitions && prevCleanWord === cleanWord) {
+      shouldIncludeWord = false;  // Skip the current word if it's a repetition
+    }
+
+    // Check for stutters (for inclusion, we'll handle separately)
+    let finalWord = word;
+    if (opts.findStutters) {
+      const parts = cleanWord.split('-');
+      if (parts.length > 1 && parts[0] && parts[1] && (parts[1].startsWith(parts[0]) || parts[0].startsWith(parts[1]))) {
+        // Replace stuttered word with the complete part
+        finalWord = word.replace(cleanWord, parts[1]);
       }
     }
 
-    result.push(word);
+    if (shouldIncludeWord) {
+      processedWords.push(finalWord);
+    }
+
+    // Update previous word for repetition detection
+    prevCleanWord = cleanWord;
+    prevWord = word;
   }
 
-  return result.join(' ');
+  return processedWords.join(' ');
 }
 
 export function analyzeSpeechPatterns(text: string): {
@@ -92,38 +105,39 @@ export function analyzeSpeechPatterns(text: string): {
   repetitions: string[];
   stutters: string[];
 } {
-  const words = text.split(/\s+/);
+  const words = splitByWhitespace(text);
   const fillerWords = new Set(['um', 'umm', 'uh', 'uhh', 'like', 'you know', 'so', 'well', 'actually', 'basically', 'literally']);
   const detectedFillers: string[] = [];
   const detectedRepetitions: string[] = [];
   const detectedStutters: string[] = [];
 
-  // Find filler words
-  for (const word of words) {
+  let prevCleanWord: string | null = null;
+
+  // Single pass to detect all patterns
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i]!;
     if (!word) continue;
-    const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
+
+    const cleanWord = removePunctuation(word).toLowerCase();
+
+    // Find filler words
     if (fillerWords.has(cleanWord)) {
       detectedFillers.push(word);
     }
-  }
 
-  for (let i = 0; i < words.length - 1; i++) {
-    if (words[i] && words[i + 1] &&
-        words[i]!.toLowerCase() === words[i + 1]!.toLowerCase()) {
-      detectedRepetitions.push(words[i]!);
+    // Find repetitions
+    if (prevCleanWord === cleanWord) {
+      detectedRepetitions.push(word);
     }
-  }
 
-  for (const word of words) {
-    if (!word) continue;
-    const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
+    // Find stutters
     const parts = cleanWord.split('-');
-
-    if (parts.length > 1) {
-      if (parts[0] && parts[1] && (parts[1].startsWith(parts[0]) || parts[0].startsWith(parts[1]))) {
-        detectedStutters.push(word);
-      }
+    if (parts.length > 1 && parts[0] && parts[1] && (parts[1].startsWith(parts[0]) || parts[0].startsWith(parts[1]))) {
+      detectedStutters.push(word);
     }
+
+    // Update for next iteration
+    prevCleanWord = cleanWord;
   }
 
   return {

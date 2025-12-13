@@ -1,244 +1,245 @@
-# Miniparse Usage Examples
+# Usage Examples
+
+This document provides practical examples of how to use Qirrel for various text processing tasks, from basic operations to advanced configurations.
 
 ## Basic Usage
 
 ### Simple Text Processing
-```typescript
-import { Pipeline } from 'miniparse';
+
+The simplest way to use Qirrel is through the `processText` function, which applies default processing:
+
+```ts
+import { processText } from 'qirrel';
 
 async function basicExample() {
-  const pipeline = new Pipeline();
-  const result = await pipeline.process('Hello world! This is a test.');
+  const text = 'Contact us at support@example.com or call +1-555-123-4567';
+  const result = await processText(text);
+  
+  console.log('Original text:', result.text);
+  console.log('Tokens:', result.tokens);
+  console.log('Extracted entities:', result.entities);
+  // Output would include entities like:
+  // { type: 'email', value: 'support@example.com', start: 13, end: 32 }
+  // { type: 'phone', value: '+1-555-123-4567', start: 37, end: 51 }
+}
 
-  console.log(result);
-  // Output will contain tokens and extracted entities
+basicExample();
+```
+
+### Using the Pipeline Class
+
+For more control over the processing workflow, use the Pipeline class:
+
+```ts
+import { Pipeline } from 'qirrel';
+
+async function pipelineExample() {
+  const pipeline = new Pipeline();
+  const result = await pipeline.process('Visit https://example.com for more info.');
+  
+  console.log('Entities found:', result.entities);
+  // Would include: { type: 'url', value: 'https://example.com', ... }
+}
+
+pipelineExample();
+```
+
+## Custom Tokenization
+
+Configure the tokenizer to handle your specific needs:
+
+```ts
+import { Tokenizer } from 'qirrel';
+
+// Create a tokenizer that preserves case and merges symbols
+const tokenizer = new Tokenizer({
+  lowercase: false,      // Preserve original capitalization
+  mergeSymbols: true     // Combine consecutive symbols into single tokens
+});
+
+const tokens = tokenizer.tokenize('Hello @world! #test');
+console.log(tokens);
+// This would keep 'Hello' as uppercase and potentially merge symbols differently
+```
+
+## Entity Extraction Examples
+
+### Extract Specific Entity Types
+
+```ts
+import { extractEmailsOnly, extractPhonesOnly, extractUrlsOnly, extractNumbersOnly } from 'qirrel';
+
+async function extractEmailsOnlyExample() {
+  const input = {
+    text: 'Email me at contact@company.com or call 555-123-4567',
+    tokens: [],
+    entities: []
+  };
+  
+  const result = extractEmailsOnly(input);
+  console.log('Emails found:', result.entities);
+  // Only emails will be extracted
+}
+
+async function extractPhonesOnlyExample() {
+  const input = {
+    text: 'Call me at +1-800-555-0199 or reach out at info@example.com',
+    tokens: [],
+    entities: []
+  };
+  
+  const result = extractPhonesOnly(input);
+  console.log('Phones found:', result.entities);
+  // Only phone numbers will be extracted
 }
 ```
 
-### Using Custom Configuration
-```typescript
-import { Pipeline } from 'miniparse';
+### Custom Pipeline with Selective Extraction
 
-// Use a custom config file
-const pipeline = new Pipeline('./my-config.yaml');
-const result = await pipeline.process('Sample text...');
+```ts
+import { Pipeline, extractNumbersOnly, clean } from 'qirrel';
+
+async function customExtractionExample() {
+  // Create a pipeline focused only on number extraction
+  const pipeline = new Pipeline();
+  pipeline.use(clean)           // Clean up punctuation and whitespace
+          .addCustomProcessor(extractNumbersOnly); // Then extract only numbers
+  
+  const result = await pipeline.process('The price is $29.99, quantity is 5, discount 20%');
+  console.log('Numbers extracted:', result.entities);
+  // Will contain: '29.99', '5', '20'
+}
+
+customExtractionExample();
 ```
 
-## Speech Analysis Examples
+## Configuration-Based Processing
 
-### Analyzing Speech Patterns
-```typescript
-import { analyzeSpeechPatterns } from 'miniparse';
+Load a custom configuration file to change processing behavior:
 
-const speechText = "Um, well, I think that, uh, like, you know, the project is good.";
+```ts
+import { Pipeline } from 'qirrel';
 
-const analysis = analyzeSpeechPatterns(speechText);
+async function configBasedProcessing() {
+  // Assumes './custom-config.yaml' exists with your configuration
+  const pipeline = new Pipeline('./custom-config.yaml');
+  
+  // Process text using custom configuration
+  const result = await pipeline.process('Transcribed speech: umm, well, like, the thing...');
+  console.log('Processed text:', result);
+}
 
-console.log('Filler words found:', analysis.fillerWords);
-console.log('Repetitions found:', analysis.repetitions);
-console.log('Stutters found:', analysis.stutters);
+configBasedProcessing();
 ```
 
-### Preprocessing Speech
-```typescript
-import { preprocessSpeechInput } from 'miniparse';
+## Advanced Processing with Multiple Components
 
-const speechText = "Um, well, I think that, uh, like, you know, the project is good.";
+Chain multiple processors together for complex operations:
 
-// Remove filler words only
-const cleanText1 = preprocessSpeechInput(speechText, {
-  removeFillerWords: true,
-  detectRepetitions: false,
-  findStutters: false
-});
-console.log(cleanText1);
-// Output: "I think that, the project is good."
+```ts
+import { Pipeline, clean, normalize, segment } from 'qirrel';
 
-// Remove filler words and detect repetitions
-const cleanText2 = preprocessSpeechInput(speechText, {
-  removeFillerWords: true,
-  detectRepetitions: true,
-  findStutters: false
-});
-console.log(cleanText2);
+async function advancedProcessingExample() {
+  const pipeline = new Pipeline();
+  
+  // Add multiple processors in sequence
+  pipeline.use(normalize)  // Normalize text first
+          .use(clean)      // Then clean punctuation
+          .use(segment);   // Finally segment into sections
+  
+  const result = await pipeline.process('The U.S.A is a big country, with approx. 50 states!');
+  console.log('Advanced processing result:', result);
+}
+
+advancedProcessingExample();
 ```
 
-## Advanced Processing Examples
+## Working with Tokens
 
-### Custom Processor
-```typescript
-import { Pipeline, type PipelineComponent, IntentResult } from 'miniparse';
+Access and manipulate tokens at different stages:
 
-// Create a custom processor that adds a custom entity
-const customProcessor: PipelineComponent = (input: IntentResult) => {
-  input.entities.push({
-    type: 'custom',
-    value: 'custom entity',
-    start: 0,
-    end: 13
+```ts
+import { Pipeline } from 'qirrel';
+
+async function tokenAnalysis() {
+  const pipeline = new Pipeline();
+  const result = await pipeline.process('The price is $19.99 + tax.');
+
+  // Separate tokens by type
+  const words = result.tokens.filter(token => token.type === 'word');
+  const numbers = result.tokens.filter(token => token.type === 'number');
+  const symbols = result.tokens.filter(token => token.type === 'symbol');
+  
+  console.log('Words:', words.map(t => t.value));
+  console.log('Numbers:', numbers.map(t => t.value));
+  console.log('Symbols:', symbols.map(t => t.value));
+}
+
+tokenAnalysis();
+```
+
+## Adding Custom Processors
+
+Extend Qirrel's functionality with custom processing components:
+
+```ts
+import { Pipeline, type PipelineComponent, type IntentResult } from 'qirrel';
+
+// Define a custom processor to identify capitalized words
+const extractCapitalizedWords: PipelineComponent = (input: IntentResult): IntentResult => {
+  const capitalizedWords = input.tokens.filter(token => 
+    token.type === 'word' && 
+    token.value.charAt(0) === token.value.charAt(0).toUpperCase() &&
+    token.value.length > 1
+  );
+  
+  // Add these as entities
+  capitalizedWords.forEach(token => {
+    input.entities.push({
+      type: 'capitalized_word',
+      value: token.value,
+      start: token.start,
+      end: token.end
+    });
   });
+  
   return input;
 };
 
-const pipeline = new Pipeline();
-pipeline.addCustomProcessor(customProcessor);
-
-const result = await pipeline.process('Sample text...');
-console.log(result.entities);
-```
-
-## LLM Integration Examples
-
-### Using LLM for Sentiment Analysis
-```typescript
-import { Pipeline, GeminiLLMAdapter, createLLMSentimentAnalyzer } from 'miniparse';
-
-const geminiAdapter = new GeminiLLMAdapter({
-  apiKey: process.env.GEMINI_API_KEY!,
-  model: 'gemini-2.5-flash',
-});
-
-const pipeline = new Pipeline();
-pipeline.addLLMProcessor(createLLMSentimentAnalyzer(geminiAdapter));
-
-const result = await pipeline.process('I love this product! It works perfectly.');
-console.log(result.entities); // Contains sentiment entity
-```
-
-### Using LLM for Summarization
-```typescript
-import { Pipeline, GeminiLLMAdapter, createLLMSummarizer } from 'miniparse';
-
-const geminiAdapter = new GeminiLLMAdapter({
-  apiKey: process.env.GEMINI_API_KEY!,
-  model: 'gemini-2.5-flash',
-});
-
-const pipeline = new Pipeline();
-pipeline.addLLMProcessor(createLLMSummarizer(geminiAdapter, undefined, 50));
-
-const result = await pipeline.process('Your long text here...');
-console.log(result.entities); // Contains summary entity
-```
-
-## Extraction Examples
-
-### Extracting Specific Information
-```typescript
-import { Pipeline } from 'miniparse';
-
-async function extractSpecificInfo() {
+async function customProcessorExample() {
   const pipeline = new Pipeline();
-  const text = `
-    Hello! My name is John Doe. You can reach me at john.doe@example.com
-    or call me at 555-123-4567. I work at Tech Corp and my website is
-    https://www.techcorp.com. I was born in 1990.
-  `;
-
-  const result = await pipeline.process(text);
-
-  // Filter for specific entity types
-  const emails = result.entities.filter(e => e.type === 'email');
-  const phones = result.entities.filter(e => e.type === 'phone');
-  const urls = result.entities.filter(e => e.type === 'url');
-  const numbers = result.entities.filter(e => e.type === 'number');
-
-  console.log('Emails found:', emails);
-  console.log('Phones found:', phones);
-  console.log('URLs found:', urls);
-  console.log('Numbers found:', numbers);
-}
-```
-
-### Using Individual Extraction Functions
-```typescript
-import { Pipeline, extractEmailsOnly } from 'miniparse';
-
-async function customExtraction() {
-  const pipeline = new Pipeline();
-
-  // Add only specific extraction processors to the pipeline
-  pipeline.addCustomProcessor(extractEmailsOnly);
-
-  const result = await pipeline.process('Email: test@example.com and Phone: (555) 123-4567');
-  // Only emails will be extracted based on the processors added
-  console.log('Result entities:', result.entities.filter(e => e.type === 'email'));
-}
-```
-
-## Configuration Examples
-
-### Default Configuration File
-Create a `miniparse.config.yaml` in your project:
-
-```yaml
-pipeline:
-  enableNormalization: true
-  enableCleaning: true
-  enableExtraction: true
-  enableSegmentation: true
-  enableAdvCleaning: false
-
-tokenizer:
-  lowercase: true
-  mergeSymbols: false
-
-speech:
-  removeFillerWords: true
-  detectRepetitions: false
-  findStutters: false
-
-extraction:
-  extractEmails: true
-  extractPhones: true
-  extractUrls: true
-  extractNumbers: true
-
-llm:
-  enabled: false
-  provider: gemini
-```
-
-## API Integration Examples
-
-### Express.js API for Text Processing
-
-This example demonstrates how to create a simple Express.js API endpoint that uses the `processText` function from Miniparse to process incoming text requests.
-
-```typescript
-import express from "express";
-import { processText } from "dd-miniparse";
-
-const app = express();
-const port = 3000;
-
-app.use(express.json());
-
-app.get("/process", async (req, res) => {
-const { text, configPath } = req.query;
-
-if (!text || typeof text !== "string") {
-  return res
-    .status(400)
-    .json({ error: "Missing or invalid 'text' query parameter." });
+  pipeline.addCustomProcessor(extractCapitalizedWords);
+  
+  const result = await pipeline.process('John visited New York City last Tuesday.');
+  console.log('Capitalized words found:', result.entities);
+  // Would include: 'John', 'New', 'York', 'City', 'Tuesday'
 }
 
-try {
-  const result = await processText(text, configPath as string | undefined);
-  res.json(result);
-} catch (error: any) {
-  console.error("Error processing text:", error);
-  res
-    .status(500)
-    .json({ error: "Failed to process text.", details: error.message });
-}
-});
-
-app.listen(port, () => {
-console.log(`Express example app listening at http://localhost:${port}`);
-console.log(`Try: http://localhost:${port}/process?text=Hello%20world%20`);
-console.log(
-  `Or with advanced cleaning enabled (if configured): http://localhost:${port}/process?text=Hello%20world%20&configPath=./default.yaml`,
-);
-});
+customProcessorExample();
 ```
+
+## Handling Different Text Types
+
+Configure Qirrel for different types of input text:
+
+```ts
+import { Pipeline } from 'qirrel';
+
+// Processing technical documentation
+async function technicalTextProcessing() {
+  const techPipeline = new Pipeline();
+  
+  // Configured to preserve technical terms and symbols
+  const result = await techPipeline.process(`
+    The API endpoint is GET /users/{id}, 
+    with rate limit of 1000 req/min. 
+    Contact admin@company.com for access.
+  `);
+  
+  console.log('Technical text result:', result);
+}
+
+technicalTextProcessing();
+```
+
+These examples demonstrate the flexibility and power of Qirrel for various text processing tasks. Customize the components and configurations to suit your specific use case.
