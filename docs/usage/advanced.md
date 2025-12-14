@@ -11,27 +11,29 @@ One of Qirrel's most powerful features is the ability to create custom processin
 A processor is a function that implements the `PipelineComponent` type:
 
 ```ts
-import { type PipelineComponent, type IntentResult } from 'qirrel';
+import { type PipelineComponent, type QirrelContext } from 'qirrel';
 
 // Define a processor that finds capitalized words
-const capitalizeProcessor: PipelineComponent = (input: IntentResult): IntentResult => {
-  // Find tokens that are capitalized words
-  const capitalizedTokens = input.tokens.filter(token => 
-    token.type === 'word' && 
-    token.value.charAt(0) === token.value.charAt(0).toUpperCase() &&
-    token.value.toLowerCase() !== token.value
-  );
-  
-  // Add them as entities
-  capitalizedTokens.forEach(token => {
-    input.entities.push({
-      type: 'capitalized_word',
-      value: token.value,
-      start: token.start,
-      end: token.end
+const capitalizeProcessor: PipelineComponent = (input: QirrelContext): QirrelContext => {
+  if (input.data) {
+    // Find tokens that are capitalized words
+    const capitalizedTokens = input.data.tokens.filter(token =>
+      token.type === 'word' &&
+      token.value.charAt(0) === token.value.charAt(0).toUpperCase() &&
+      token.value.toLowerCase() !== token.value
+    );
+
+    // Add them as entities
+    capitalizedTokens.forEach(token => {
+      input.data.entities.push({
+        type: 'capitalized_word',
+        value: token.value,
+        start: token.start,
+        end: token.end
+      });
     });
-  });
-  
+  }
+
   return input;
 };
 ```
@@ -144,22 +146,24 @@ const results = await Promise.all([
 Beyond the built-in entity types, you can create custom extraction logic:
 
 ```ts
-import { type PipelineComponent, type IntentResult } from 'qirrel';
+import { type PipelineComponent, type QirrelContext } from 'qirrel';
 
-const extractHashtags: PipelineComponent = (input: IntentResult): IntentResult => {
-  // Find hashtag patterns
-  const hashtagRegex = /#[a-zA-Z0-9_]+/g;
-  let match;
-  
-  while ((match = hashtagRegex.exec(input.text)) !== null) {
-    input.entities.push({
-      type: 'hashtag',
-      value: match[0],
-      start: match.index,
-      end: match.index + match[0].length
-    });
+const extractHashtags: PipelineComponent = (input: QirrelContext): QirrelContext => {
+  if (input.data) {
+    // Find hashtag patterns
+    const hashtagRegex = /#[a-zA-Z0-9_]+/g;
+    let match;
+
+    while ((match = hashtagRegex.exec(input.data.text)) !== null) {
+      input.data.entities.push({
+        type: 'hashtag',
+        value: match[0],
+        start: match.index,
+        end: match.index + match[0].length
+      });
+    }
   }
-  
+
   return input;
 };
 

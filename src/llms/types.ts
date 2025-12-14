@@ -1,4 +1,4 @@
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 
 export interface LLMConfig {
   apiKey: string;
@@ -21,7 +21,7 @@ export interface LLMResponse {
 
 export interface LLMAdapter {
   generate(prompt: string, options?: Partial<LLMConfig>): Promise<LLMResponse>;
-  generateWithIntentResult(input: IntentResult, promptTemplate: string, options?: Partial<LLMConfig>): Promise<IntentResult>;
+  generateWithIntentResult(input: QirrelContext, promptTemplate: string, options?: Partial<LLMConfig>): Promise<QirrelContext>;
 }
 
 export interface LLMProcessorOptions {

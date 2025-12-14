@@ -1,6 +1,6 @@
 import type { Token } from "./Tokenizer";
-import type { IntentResult } from "../index";
+import type { QirrelContext } from "../index";
 
 export type PipelineComponent = (
-  input: IntentResult,
-) => IntentResult | Promise<IntentResult>;
+  input: QirrelContext,
+) => QirrelContext | Promise<QirrelContext>;

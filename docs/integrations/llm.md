@@ -78,25 +78,27 @@ setTimeout(async () => {
 You can add LLM-based processing components to your pipeline:
 
 ```ts
-import { Pipeline, type PipelineComponent, type IntentResult } from 'qirrel';
+import { Pipeline, type PipelineComponent, type QirrelContext } from 'qirrel';
 
-const llmEnhancedProcessor: PipelineComponent = async (input: IntentResult): Promise<IntentResult> => {
-  const pipeline = new Pipeline('./config-with-llm.yaml');
-  const llmAdapter = pipeline.getLLMAdapter();
-  
-  if (llmAdapter) {
-    // Use LLM to analyze sentiment, categorize content, etc.
-    const analysis = await llmAdapter.analyzeText(`Analyze this text for sentiment: ${input.text}`);
-    
-    // Add LLM-derived entities or metadata to the result
-    input.entities.push({
-      type: 'llm_analysis',
-      value: analysis.sentiment || 'neutral',
-      start: 0,
-      end: input.text.length
-    });
+const llmEnhancedProcessor: PipelineComponent = async (input: QirrelContext): Promise<QirrelContext> => {
+  if (input.data) {
+    const pipeline = new Pipeline('./config-with-llm.yaml');
+    const llmAdapter = pipeline.getLLMAdapter();
+
+    if (llmAdapter) {
+      // Use LLM to analyze sentiment, categorize content, etc.
+      const analysis = await llmAdapter.analyzeText(`Analyze this text for sentiment: ${input.data.text}`);
+
+      // Add LLM-derived entities or metadata to the result
+      input.data.entities.push({
+        type: 'llm_analysis',
+        value: analysis.sentiment || 'neutral',
+        start: 0,
+        end: input.data.text.length
+      });
+    }
   }
-  
+
   return input;
 };
 

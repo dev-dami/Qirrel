@@ -12,7 +12,7 @@ import {
 } from "../processors";
 import { LLMAdapterFactory } from "../llms";
 import type { LLMAdapter } from "../llms";
-import type { Entity, IntentResult } from "../types";
+import type { Entity, QirrelContext } from "../types";
 import type { PipelineComponent } from "./types";
 import { ConfigLoader } from "../config/loader";
 import type { MiniparseConfig } from "../config/defaults";
@@ -70,19 +70,43 @@ export class Pipeline {
     return this;
   }
 
-  public async process(text: string): Promise<IntentResult> {
-    const tokens = this.tokenizer.tokenize(text);
-    let result: IntentResult = {
-      text,
-      tokens,
-      entities: [],
+  public async process(text: string): Promise<QirrelContext> {
+    // Create initial context with empty data
+    const initialContext: QirrelContext = {
+      meta: {
+        requestId: 'req_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+        timestamp: Date.now(),
+        source: 'cli'
+      },
+      memory: {
+        cache: {}
+      },
+      llm: {
+        model: this.config.llm?.model || 'gemini-2.5-flash',
+        safety: {
+          allowTools: true
+        }
+      }
     };
 
+    // Tokenize and add to context
+    const tokens = this.tokenizer.tokenize(text);
+    const contextWithText: QirrelContext = {
+      ...initialContext,
+      data: {
+        text,
+        tokens,
+        entities: []
+      }
+    };
+
+    let resultContext: QirrelContext = contextWithText;
+
     for (const component of this.components) {
-      result = await component(result);
+      resultContext = await component(resultContext);
     }
 
-    return result;
+    return resultContext;
   }
 
   public getConfig(): MiniparseConfig {

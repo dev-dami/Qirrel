@@ -31,29 +31,46 @@ async function example() {
 }
 ```
 
-This will return an `IntentResult` object containing:
-- The original text
-- An array of tokens
-- An array of extracted entities
+This will return an `QirrelContext` object containing:
+- The canonical context with namespaces (meta, memory, llm)
+- The original text in the data field
+- An array of tokens in the data field
+- An array of extracted entities in the data field
 
 ### Understanding the Output
 
 ```ts
 {
-  text: "Contact me at email@example.com",
-  tokens: [
-    { value: "contact", type: "word", start: 0, end: 7 },
-    { value: "me", type: "word", start: 8, end: 10 },
-    // ... more tokens
-  ],
-  entities: [
-    {
-      type: "email", 
-      value: "email@example.com",
-      start: 14,
-      end: 31
+  meta: {
+    requestId: "req_1a2b3c4d5e",
+    timestamp: 1234567890,
+    source: "cli"
+  },
+  memory: {
+    cache: {}
+  },
+  llm: {
+    model: "gemini-2.5-flash",
+    safety: {
+      allowTools: true
     }
-  ]
+  },
+  data: {
+    text: "Contact me at email@example.com",
+    tokens: [
+      { value: "contact", type: "word", start: 0, end: 7 },
+      { value: "me", type: "word", start: 8, end: 10 },
+      // ... more tokens
+    ],
+    entities: [
+      {
+        type: "email",
+        value: "email@example.com",
+        start: 14,
+        end: 31
+      }
+    ]
+  }
 }
 ```
 

@@ -24,7 +24,7 @@ npm install qirrel
 ```ts
 import { processText } from 'qirrel';
 const result = await processText('Contact John at john@example.com or call +1-555-123-4567');
-console.log(result.entities);
+console.log(result.data?.entities);
 // [
 //   { type: 'email', value: 'john@example.com', ... },
 //   { type: 'phone', value: '+1-555-123-4567', ... }
@@ -36,7 +36,7 @@ console.log(result.entities);
 ```ts
 import { processText } from 'qirrel';
 const result = await processText('Visit https://example.com for more info. Price: $29.99');
-console.log(result.entities);
+console.log(result.data?.entities);
 // [
 //   { type: 'url', value: 'https://example.com', ... },
 //   { type: 'number', value: '29.99', ... }
@@ -49,7 +49,7 @@ console.log(result.entities);
 import { Pipeline } from 'qirrel';
 const pipeline = new Pipeline();
 const result = await pipeline.process('Check out https://github.com and email support@example.com');
-console.log(result.entities);
+console.log(result.data?.entities);
 ```
 
 ## LLM Integration

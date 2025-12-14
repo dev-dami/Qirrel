@@ -7,7 +7,7 @@ This document provides insights into Qirrel's architecture and implementation, h
 Qirrel follows a modular pipeline architecture that allows for flexible text processing workflows. The core components work together to provide comprehensive text analysis capabilities:
 
 ```
-Input Text → Tokenizer → Pipeline Components → Output (IntentResult)
+Input Text → Tokenizer → Pipeline Components → Output (QirrelContext)
 ```
 
 ### Core Components
@@ -41,7 +41,7 @@ The Pipeline orchestrates the text processing workflow by managing a chain of pr
 constructor(configPath?: string) {
   // Load configuration
   this.config = ConfigLoader.loadConfig(configPath);
-  
+
   // Conditionally add processors based on config
   if (this.config.pipeline.enableNormalization) this.use(normalize);
   if (this.config.pipeline.enableCleaning) this.use(clean);
@@ -50,7 +50,7 @@ constructor(configPath?: string) {
 ```
 
 #### 3. Processors (src/processors/)
-Processors are individual units of functionality that transform the text processing result. They follow a functional programming approach, accepting and returning `IntentResult` objects.
+Processors are individual units of functionality that transform the text processing result. They follow a functional programming approach, accepting and returning `QirrelContext` objects.
 
 - **Design Pattern**: Stateless functions that implement the `PipelineComponent` type
 - **Modularity**: Each processor handles a specific aspect of text analysis
@@ -93,7 +93,7 @@ For advanced processing capabilities, Qirrel supports integration with Large Lan
 
 Qirrel employs a strong type system for reliable text processing:
 
-- **IntentResult Interface**: Unified return type for all processing operations
+- **QirrelContext Interface**: Canonical context for all processing operations
 - **Token Interface**: Detailed information about each text element
 - **Entity Interface**: Structured representation of extracted information
 - **Type Safety**: Comprehensive TypeScript definitions throughout
@@ -131,7 +131,7 @@ The project structure follows a logical separation of concerns:
 ```
 src/
 ├── core/           # Fundamental components (Pipeline, Tokenizer)
-├── processors/     # Individual text processing functions  
+├── processors/     # Individual text processing functions
 ├── types/          # TypeScript type definitions
 ├── config/         # Configuration loading and defaults
 ├── llms/           # LLM integration components

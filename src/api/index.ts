@@ -1,10 +1,10 @@
 import { Pipeline } from "../core/pipeline";
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 
 export async function processText(
   text: string,
   configPath?: string
-): Promise<IntentResult> {
+): Promise<QirrelContext> {
   const pipeline = new Pipeline(configPath);
   return pipeline.process(text);
 }

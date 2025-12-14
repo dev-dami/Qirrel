@@ -1,4 +1,4 @@
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 import { LLMCache } from "./cache";
 import { DefaultFallbackHandler, type FallbackHandler } from "./fallback";
 import type {
@@ -41,21 +41,27 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   ): Promise<LLMResponse>;
 
   public async generateWithIntentResult(
-    input: IntentResult,
+    input: QirrelContext,
     promptTemplate: string,
     options?: Partial<LLMConfig>,
-  ): Promise<IntentResult> {
+  ): Promise<QirrelContext> {
     try {
+      const text = input.data?.text || "";
+      const tokens = input.data?.tokens || [];
+      const entities = input.data?.entities || [];
+
       const filledPrompt = promptTemplate
-        .replace(/\{text\}/g, input.text)
-        .replace(/\{tokens\}/g, input.tokens.map((t) => t.value).join(" "))
+        .replace(/\{text\}/g, text)
+        .replace(/\{tokens\}/g, tokens.map((t) => t.value).join(" "))
         .replace(
           /\{entities\}/g,
-          input.entities.map((e) => `${e.type}:${e.value}`).join(", "),
+          entities.map((e) => `${e.type}:${e.value}`).join(", "),
         );
 
       const response = await this.generate(filledPrompt, options);
-      return this.parseResponseToIntentResult(input, response);
+
+      // Return the input context with potentially updated data
+      return input;
     } catch (error) {
       console.warn(
         `LLM processing failed in generateWithIntentResult: ${error}`,
@@ -63,13 +69,6 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
 
       return input;
     }
-  }
-
-  protected parseResponseToIntentResult(
-    input: IntentResult,
-    response: LLMResponse,
-  ): IntentResult {
-    return input;
   }
 
   protected mergeConfig(options?: Partial<LLMConfig>): LLMConfig {
