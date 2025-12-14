@@ -1,31 +1,39 @@
 import type { PipelineComponent } from "../core/types";
-import { IntentResult } from "../types";
+import { QirrelContext } from "../types";
 import validator from "validator";
 import { parsePhoneNumber } from 'libphonenumber-js';
 
 export const extract: PipelineComponent = (
-  input: IntentResult,
-): IntentResult => {
+  input: QirrelContext,
+): QirrelContext => {
   try {
-    extractEmails(input);
+    if (input.data) {
+      extractEmails(input.data);
+    }
   } catch (e) {
     console.warn("Email extraction failed:", e);
   }
 
   try {
-    extractPhones(input);
+    if (input.data) {
+      extractPhones(input.data);
+    }
   } catch (e) {
     console.warn("Phone extraction failed:", e);
   }
 
   try {
-    extractUrls(input);
+    if (input.data) {
+      extractUrls(input.data);
+    }
   } catch (e) {
     console.warn("URL extraction failed:", e);
   }
 
   try {
-    extractNumbers(input);
+    if (input.data) {
+      extractNumbers(input.data);
+    }
   } catch (e) {
     console.warn("Number extraction failed:", e);
   }
@@ -34,10 +42,12 @@ export const extract: PipelineComponent = (
 };
 
 export const extractEmailsOnly: PipelineComponent = (
-  input: IntentResult,
-): IntentResult => {
+  input: QirrelContext,
+): QirrelContext => {
   try {
-    extractEmails(input);
+    if (input.data) {
+      extractEmails(input.data);
+    }
   } catch (e) {
     console.warn("Email extraction failed:", e);
   }
@@ -45,10 +55,12 @@ export const extractEmailsOnly: PipelineComponent = (
 };
 
 export const extractPhonesOnly: PipelineComponent = (
-  input: IntentResult,
-): IntentResult => {
+  input: QirrelContext,
+): QirrelContext => {
   try {
-    extractPhones(input);
+    if (input.data) {
+      extractPhones(input.data);
+    }
   } catch (e) {
     console.warn("Phone extraction failed:", e);
   }
@@ -56,10 +68,12 @@ export const extractPhonesOnly: PipelineComponent = (
 };
 
 export const extractUrlsOnly: PipelineComponent = (
-  input: IntentResult,
-): IntentResult => {
+  input: QirrelContext,
+): QirrelContext => {
   try {
-    extractUrls(input);
+    if (input.data) {
+      extractUrls(input.data);
+    }
   } catch (e) {
     console.warn("URL extraction failed:", e);
   }
@@ -67,18 +81,20 @@ export const extractUrlsOnly: PipelineComponent = (
 };
 
 export const extractNumbersOnly: PipelineComponent = (
-  input: IntentResult,
-): IntentResult => {
+  input: QirrelContext,
+): QirrelContext => {
   try {
-    extractNumbers(input);
+    if (input.data) {
+      extractNumbers(input.data);
+    }
   } catch (e) {
     console.warn("Number extraction failed:", e);
   }
   return input;
 };
 
-function extractEmails(input: IntentResult): void {
-  const text = input.text;
+function extractEmails(inputData: { text: string; entities: any[] }): void {
+  const text = inputData.text;
 
   // Use validator to find and validate emails more reliably
   // First, find potential emails using a simple pattern, then validate with library
@@ -88,7 +104,7 @@ function extractEmails(input: IntentResult): void {
     if (validator.isEmail(potentialEmail)) {
       const startIndex = text.indexOf(potentialEmail);
       if (startIndex !== -1) {
-        input.entities.push({
+        inputData.entities.push({
           type: "email",
           value: potentialEmail,
           start: startIndex,
@@ -99,8 +115,8 @@ function extractEmails(input: IntentResult): void {
   }
 }
 
-function extractPhones(input: IntentResult): void {
-  const text = input.text;
+function extractPhones(inputData: { text: string; entities: any[] }): void {
+  const text = inputData.text;
 
   // More comprehensive regex to capture various phone formats
   const phoneRegex = /(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})|(\+?[1-9]\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9})/g;
@@ -151,7 +167,7 @@ function extractPhones(input: IntentResult): void {
       }
 
       if (isValid) {
-        input.entities.push({
+        inputData.entities.push({
           type: "phone",
           value: potential.number,
           start: potential.start,
@@ -165,8 +181,8 @@ function extractPhones(input: IntentResult): void {
   }
 }
 
-function extractUrls(input: IntentResult): void {
-  const text = input.text;
+function extractUrls(inputData: { text: string; entities: any[] }): void {
+  const text = inputData.text;
 
   // Find potential URLs by looking for common protocol prefixes
   const urlPattern = /(https?:\/\/[^\s"'<>\]]+)/g;
@@ -176,7 +192,7 @@ function extractUrls(input: IntentResult): void {
     const url = match[0];
     // Use validator to properly validate the URL
     if (validator.isURL(url, { protocols: ['http', 'https'], require_protocol: true })) {
-      input.entities.push({
+      inputData.entities.push({
         type: "url",
         value: url,
         start: match.index,
@@ -186,8 +202,8 @@ function extractUrls(input: IntentResult): void {
   }
 }
 
-function extractNumbers(input: IntentResult): void {
-  const text = input.text;
+function extractNumbers(inputData: { text: string; entities: any[] }): void {
+  const text = inputData.text;
 
   // Find potential numbers using a regex
   const numberPattern = /-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/g;
@@ -197,7 +213,7 @@ function extractNumbers(input: IntentResult): void {
     const numStr = match[0];
     // Validate using both validator and built-in parsing
     if (validator.isNumeric(numStr) || (!isNaN(parseFloat(numStr)) && isFinite(parseFloat(numStr)))) {
-      input.entities.push({
+      inputData.entities.push({
         type: "number",
         value: numStr,
         start: match.index,

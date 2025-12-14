@@ -1,5 +1,5 @@
 import type { PipelineComponent } from "../core/types";
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 import type { LLMAdapter, LLMConfig } from "./types";
 
 /**
@@ -10,13 +10,17 @@ export const createLLMSummarizer = (
   config?: Partial<LLMConfig>,
   maxSummaryLength: number = 100,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      const prompt = `Summarize the following text in ${maxSummaryLength} words or fewer: "${input.text}"`;
+      if (!input.data) {
+        return input;
+      }
+
+      const prompt = `Summarize the following text in ${maxSummaryLength} words or fewer: "${input.data.text}"`;
 
       const response = await adapter.generate(prompt, config);
 
-      input.entities.push({
+      input.data.entities.push({
         type: "summary",
         value: response.content,
         start: 0,
@@ -35,18 +39,22 @@ export const createLLMSentimentAnalyzer = (
   adapter: LLMAdapter,
   config?: Partial<LLMConfig>,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      const prompt = `Analyze the sentiment of the following text. Respond with only one of these values: positive, negative, or neutral.\n\nText: "${input.text}"`;
+      if (!input.data) {
+        return input;
+      }
+
+      const prompt = `Analyze the sentiment of the following text. Respond with only one of these values: positive, negative, or neutral.\n\nText: "${input.data.text}"`;
 
       const response = await adapter.generate(prompt, config);
       const sentiment = response.content.trim().toLowerCase();
       if (["positive", "negative", "neutral"].includes(sentiment)) {
-        input.entities.push({
+        input.data.entities.push({
           type: "sentiment",
           value: sentiment,
           start: 0,
-          end: input.text.length,
+          end: input.data.text.length,
         });
       }
 
@@ -63,9 +71,13 @@ export const createLLMIntentClassifier = (
   possibleIntents: string[],
   config?: Partial<LLMConfig>,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      const prompt = `Classify the intent of the following text. Respond with only one of these intents: ${possibleIntents.join(", ")}.\n\nText: "${input.text}"`;
+      if (!input.data) {
+        return input;
+      }
+
+      const prompt = `Classify the intent of the following text. Respond with only one of these intents: ${possibleIntents.join(", ")}.\n\nText: "${input.data.text}"`;
 
       const response = await adapter.generate(prompt, config);
       const intent = response.content.trim();
@@ -77,11 +89,11 @@ export const createLLMIntentClassifier = (
             intent.toLowerCase().includes(possibleIntent.toLowerCase()),
         )
       ) {
-        input.entities.push({
+        input.data.entities.push({
           type: "intent",
           value: intent,
           start: 0,
-          end: input.text.length,
+          end: input.data.text.length,
         });
       }
 
@@ -97,20 +109,24 @@ export const createLLMTopicClassifier = (
   adapter: LLMAdapter,
   config?: Partial<LLMConfig>,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      const prompt = `Identify the main topic(s) of the following text. Respond with a comma-separated list of topics.\n\nText: "${input.text}"`;
+      if (!input.data) {
+        return input;
+      }
+
+      const prompt = `Identify the main topic(s) of the following text. Respond with a comma-separated list of topics.\n\nText: "${input.data.text}"`;
 
       const response = await adapter.generate(prompt, config);
       const topics = response.content.split(",").map((topic) => topic.trim());
 
       for (const topic of topics) {
         if (topic) {
-          input.entities.push({
+          input.data.entities.push({
             type: "topic",
             value: topic,
             start: 0,
-            end: input.text.length,
+            end: input.data.text.length,
           });
         }
       }
@@ -127,13 +143,17 @@ export const createLLMTextEnhancer = (
   adapter: LLMAdapter,
   config?: Partial<LLMConfig>,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      const prompt = `Improve and enhance the following text while preserving its meaning: "${input.text}"`;
+      if (!input.data) {
+        return input;
+      }
+
+      const prompt = `Improve and enhance the following text while preserving its meaning: "${input.data.text}"`;
 
       const response = await adapter.generate(prompt, config);
 
-      input.text = response.content;
+      input.data.text = response.content;
 
       return input;
     } catch (error) {

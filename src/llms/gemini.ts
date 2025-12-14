@@ -1,4 +1,4 @@
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 import { BaseLLMAdapter } from "./base";
 import type { LLMConfig, LLMResponse } from "./types";
 
@@ -76,12 +76,5 @@ export class GeminiLLMAdapter extends BaseLLMAdapter {
     } catch (error) {
       throw new Error(`Gemini API request failed: ${error}`);
     }
-  }
-
-  protected override parseResponseToIntentResult(
-    input: IntentResult,
-    response: LLMResponse,
-  ): IntentResult {
-    return input;
   }
 }

@@ -1,4 +1,4 @@
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 import type { LLMResponse, LLMConfig } from "./types";
 
 export interface FallbackHandler {
@@ -70,10 +70,10 @@ export class FallbackLLMAdapterWrapper {
   }
 
   async generateWithIntentResult(
-    input: IntentResult,
+    input: QirrelContext,
     promptTemplate: string,
     options?: Partial<LLMConfig>,
-  ): Promise<IntentResult> {
+  ): Promise<QirrelContext> {
     try {
       return await this.primaryAdapter.generateWithIntentResult(
         input,

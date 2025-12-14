@@ -1,4 +1,4 @@
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 import { BaseLLMAdapter } from "./base";
 import type { LLMConfig, LLMResponse } from "./types";
 import https from "https";
@@ -13,7 +13,7 @@ export class GenericLLMAdapter extends BaseLLMAdapter {
     super(config, enableCache);
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || "https://api.example.com/v1";
-    
+
     // Default headers - can be customized per provider
     this.headers = {
       "Content-Type": "application/json",
@@ -29,10 +29,10 @@ export class GenericLLMAdapter extends BaseLLMAdapter {
   // Internal method to make the actual API call
   private async makeAPICall(prompt: string, options?: Partial<LLMConfig>): Promise<LLMResponse> {
     const config = this.mergeConfig(options);
-    
+
     return new Promise((resolve, reject) => {
       const url = new URL(`${this.baseUrl}/completions`); // Generic endpoint
-      
+
       const postData = this.buildRequestBody(prompt, config);
 
       const requestOptions = {
@@ -53,20 +53,20 @@ export class GenericLLMAdapter extends BaseLLMAdapter {
 
       const req = https.request(requestOptions, (res) => {
         clearTimeout(timeoutId);
-        
+
         let data = "";
         res.on("data", (chunk) => {
           data += chunk;
         });
-        
+
         res.on("end", () => {
           try {
             const response = JSON.parse(data);
-            
+
             if (res.statusCode && res.statusCode >= 400) {
               throw new Error(`API request failed with status ${res.statusCode}: ${data}`);
             }
-            
+
             const processedResponse = this.processResponse(response, config);
             resolve(processedResponse);
           } catch (error) {

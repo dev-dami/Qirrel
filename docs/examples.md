@@ -183,26 +183,28 @@ tokenAnalysis();
 Extend Qirrel's functionality with custom processing components:
 
 ```ts
-import { Pipeline, type PipelineComponent, type IntentResult } from 'qirrel';
+import { Pipeline, type PipelineComponent, type QirrelContext } from 'qirrel';
 
 // Define a custom processor to identify capitalized words
-const extractCapitalizedWords: PipelineComponent = (input: IntentResult): IntentResult => {
-  const capitalizedWords = input.tokens.filter(token => 
-    token.type === 'word' && 
-    token.value.charAt(0) === token.value.charAt(0).toUpperCase() &&
-    token.value.length > 1
-  );
-  
-  // Add these as entities
-  capitalizedWords.forEach(token => {
-    input.entities.push({
-      type: 'capitalized_word',
-      value: token.value,
-      start: token.start,
-      end: token.end
+const extractCapitalizedWords: PipelineComponent = (input: QirrelContext): QirrelContext => {
+  if (input.data) {
+    const capitalizedWords = input.data.tokens.filter(token =>
+      token.type === 'word' &&
+      token.value.charAt(0) === token.value.charAt(0).toUpperCase() &&
+      token.value.length > 1
+    );
+
+    // Add these as entities
+    capitalizedWords.forEach(token => {
+      input.data.entities.push({
+        type: 'capitalized_word',
+        value: token.value,
+        start: token.start,
+        end: token.end
+      });
     });
-  });
-  
+  }
+
   return input;
 };
 

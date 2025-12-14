@@ -1,17 +1,21 @@
 import type { PipelineComponent } from "../core/types";
-import type { IntentResult } from "../types";
+import type { QirrelContext } from "../types";
 import type { LLMProcessorOptions, LLMAdapter } from "./types";
 
 export const createLLMProcessor = (
   options: LLMProcessorOptions,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      return await options.adapter.generateWithIntentResult(
+      // Use the adapter to process the full context
+      const result = await options.adapter.generateWithIntentResult(
         input,
         options.promptTemplate,
         options.config,
       );
+
+      // Return the result as is (should be QirrelContext)
+      return result;
     } catch (error) {
       console.warn("LLM processor failed:", error);
       return input;
@@ -24,9 +28,13 @@ export const createLLMEntityExtractor = (
   adapter: LLMAdapter,
   config?: Partial<LLMProcessorOptions["config"]>,
 ): PipelineComponent => {
-  return async (input: IntentResult): Promise<IntentResult> => {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
-      const enhancedPrompt = `${promptTemplate}\n\nText: "${input.text}"\n\nPlease extract entities in JSON format with structure: {entities: [{type: string, value: string, start: number, end: number}]}`;
+      if (!input.data) {
+        return input;
+      }
+
+      const enhancedPrompt = `${promptTemplate}\n\nText: "${input.data.text}"\n\nPlease extract entities in JSON format with structure: {entities: [{type: string, value: string, start: number, end: number}]}`;
 
       const response = await adapter.generate(enhancedPrompt, config);
 
@@ -78,7 +86,7 @@ export const createLLMEntityExtractor = (
               typeof entity.start === "number" &&
               typeof entity.end === "number"
             ) {
-              input.entities.push({
+              input.data.entities.push({
                 type: entity.type,
                 value: entity.value,
                 start: entity.start,

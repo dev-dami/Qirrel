@@ -4,14 +4,14 @@ Qirrel provides a comprehensive API for text processing, tokenization, and entit
 
 ## Main Functions
 
-### `processText(text: string, configPath?: string) => Promise<IntentResult>`
+### `processText(text: string, configPath?: string) => Promise<QirrelContext>`
 Asynchronously processes text using the default pipeline configuration. This is the simplest way to use Qirrel.
 
 **Parameters:**
 - `text: string` - The input text to process
 - `configPath?: string` - Optional path to a YAML configuration file
 
-**Returns:** Promise that resolves to an `IntentResult` object
+**Returns:** Promise that resolves to a `QirrelContext` object
 
 **Example:**
 ```ts
@@ -34,7 +34,7 @@ new Pipeline(configPath?: string)
 
 **Methods:**
 
-#### `process(text: string) => Promise<IntentResult>`
+#### `process(text: string) => Promise<QirrelContext>`
 Processes the input text through the pipeline components.
 
 #### `use(component: PipelineComponent) => this`
@@ -115,14 +115,56 @@ Performs advanced cleaning operations on the text.
 
 ## Types
 
-### `IntentResult`
-Represents the output of text processing operations.
+### `QirrelContext`
+Represents the canonical context for text processing operations.
 
 ```ts
-interface IntentResult {
-  text: string;        // Original input text
-  tokens: Token[];     // Array of processed tokens
-  entities: Entity[];  // Array of extracted entities
+interface QirrelContext {
+  meta: MetaContext;
+  memory: MemoryContext;
+  llm: LLMContext;
+  data?: {
+    text: string;        // Original input text
+    tokens: Token[];     // Array of processed tokens
+    entities: Entity[];  // Array of extracted entities
+  };
+}
+```
+
+### `MetaContext`
+Operational and request-scoped data.
+
+```ts
+interface MetaContext {
+  requestId: string;
+  timestamp: number;
+  source?: 'http' | 'cli' | 'worker';
+  trace?: Record<string, string>;
+}
+```
+
+### `MemoryContext`
+State accumulated across turns or executions.
+
+```ts
+interface MemoryContext {
+  shortTerm?: unknown;
+  longTerm?: unknown;
+  cache?: Record<string, unknown>;
+}
+```
+
+### `LLMContext`
+LLM-specific controls and safety boundaries.
+
+```ts
+interface LLMContext {
+  model: string;
+  temperature?: number;
+  safety: {
+    allowTools: boolean;
+    redactions?: string[];
+  };
 }
 ```
 
@@ -214,5 +256,5 @@ interface TokenizerOptions {
 Type representing a processing component that can be added to a Pipeline.
 
 ```ts
-type PipelineComponent = (input: IntentResult) => Promise<IntentResult>;
+type PipelineComponent = (input: QirrelContext) => Promise<QirrelContext>;
 ```

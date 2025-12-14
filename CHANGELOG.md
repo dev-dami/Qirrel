@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [QIRRELCONTEXT IMPLEMENTATION 0.2.0]
+
+### Added
+- QirrelContext as the canonical context 
+- Namespaced fields: meta (requestId, timestamp, source, trace), memory (shortTerm, longTerm, cache), and llm (model, temperature, safety)
+- JSON serializability support for context persistence and transport
+- Backward compatibility safeguards for existing integrations
+
+### Changed
+- Replaced all IntentResult references with QirrelContext throughout codebase
+- Updated all processors (clean, extract, normalize, segment, advClean) to use QirrelContext
+- Modified LLM components and adapters to work with new context structure
+- Updated API functions to return QirrelContext instead of IntentResult
+- Refactored documentation to reflect new context architecture
+- Updated test suite to work with QirrelContext structure
+
+### Removed
+- Deprecated IntentResult interface and all related type definitions
+- Legacy processing patterns that bypassed canonical context
+
+## [QIRREL UPDATE 0.1.0]
 
 ### Added
 - Comprehensive documentation restructure with modular approach
