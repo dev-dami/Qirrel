@@ -74,7 +74,7 @@ export class Pipeline {
     // Create initial context with empty data
     const initialContext: QirrelContext = {
       meta: {
-        requestId: 'req_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+        requestId: 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
         timestamp: Date.now(),
         source: 'cli'
       },
