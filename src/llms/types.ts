@@ -21,7 +21,7 @@ export interface LLMResponse {
 
 export interface LLMAdapter {
   generate(prompt: string, options?: Partial<LLMConfig>): Promise<LLMResponse>;
-  generateWithIntentResult(input: QirrelContext, promptTemplate: string, options?: Partial<LLMConfig>): Promise<QirrelContext>;
+  generateWithContext(input: QirrelContext, promptTemplate: string, options?: Partial<LLMConfig>): Promise<QirrelContext>;
 }
 
 export interface LLMProcessorOptions {

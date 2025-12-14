@@ -1,5 +1,5 @@
 import type { PipelineComponent } from "../core/types";
-import { QirrelContext } from "../types";
+import { QirrelContext, Entity } from "../types";
 import validator from "validator";
 import { parsePhoneNumber } from 'libphonenumber-js';
 
@@ -93,7 +93,7 @@ export const extractNumbersOnly: PipelineComponent = (
   return input;
 };
 
-function extractEmails(inputData: { text: string; entities: any[] }): void {
+function extractEmails(inputData: { text: string; entities: Entity[] }): void {
   const text = inputData.text;
 
   // Use validator to find and validate emails more reliably
@@ -115,7 +115,7 @@ function extractEmails(inputData: { text: string; entities: any[] }): void {
   }
 }
 
-function extractPhones(inputData: { text: string; entities: any[] }): void {
+function extractPhones(inputData: { text: string; entities: Entity[] }): void {
   const text = inputData.text;
 
   // More comprehensive regex to capture various phone formats
@@ -181,7 +181,7 @@ function extractPhones(inputData: { text: string; entities: any[] }): void {
   }
 }
 
-function extractUrls(inputData: { text: string; entities: any[] }): void {
+function extractUrls(inputData: { text: string; entities: Entity[] }): void {
   const text = inputData.text;
 
   // Find potential URLs by looking for common protocol prefixes
@@ -202,7 +202,7 @@ function extractUrls(inputData: { text: string; entities: any[] }): void {
   }
 }
 
-function extractNumbers(inputData: { text: string; entities: any[] }): void {
+function extractNumbers(inputData: { text: string; entities: Entity[] }): void {
   const text = inputData.text;
 
   // Find potential numbers using a regex

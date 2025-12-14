@@ -40,7 +40,7 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
     options?: Partial<LLMConfig>,
   ): Promise<LLMResponse>;
 
-  public async generateWithIntentResult(
+  public async generateWithContext(
     input: QirrelContext,
     promptTemplate: string,
     options?: Partial<LLMConfig>,
@@ -64,7 +64,7 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
       return input;
     } catch (error) {
       console.warn(
-        `LLM processing failed in generateWithIntentResult: ${error}`,
+        `LLM processing failed in generateWithContext: ${error}`,
       );
 
       return input;

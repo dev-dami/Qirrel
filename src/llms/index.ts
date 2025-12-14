@@ -1,6 +1,7 @@
 export * from "./types";
 export * from "./base";
 export * from "./gemini";
+export * from "./openai";
 export * from "./generic";
 export * from "./cache";
 export * from "./fallback";
