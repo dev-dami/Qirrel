@@ -18,6 +18,16 @@ export class LLMAdapterFactory {
             `Gemini adapter failed to load: ${error}. Install @google/generative-ai to use Gemini: bun add @google/generative-ai`,
           );
         }
+      case "openai":
+      case "openai-compatible":
+        {
+          try {
+            const { OpenAILLMAdapter } = await import("./openai.js");
+            return new OpenAILLMAdapter(config, enableCache);
+          } catch (err) {
+            throw new Error(`Failed to load OpenAI adapter: ${err}`);
+          }
+        }
       case "generic":
         return new GenericLLMAdapter(config, "generic", enableCache);
       default:

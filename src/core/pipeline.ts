@@ -22,6 +22,7 @@ export class Pipeline {
   private readonly tokenizer: Tokenizer;
   private readonly config: MiniparseConfig;
   private llmAdapter?: LLMAdapter;
+  private llmInitPromise: Promise<void> | null = null;
 
   constructor(configPath?: string) {
     this.config = ConfigLoader.loadConfig(configPath);
@@ -46,8 +47,8 @@ export class Pipeline {
 
     // Initialize LLM adapter if LLM functionality is enabled
     if (this.config.llm?.enabled && this.config.llm.apiKey) {
-      // Initialize LLM adapter asynchronously
-      LLMAdapterFactory.create(
+      // Initialize LLM adapter asynchronously and track the promise
+      this.llmInitPromise = LLMAdapterFactory.create(
         {
           apiKey: this.config.llm.apiKey, // This is guaranteed to exist due to the condition above
           model: this.config.llm.model || "gemini-2.5-flash", // Provide default model
@@ -61,6 +62,7 @@ export class Pipeline {
         this.llmAdapter = adapter;
       }).catch(error => {
         console.warn("Failed to initialize LLM adapter:", error);
+        // Even on error, resolve the promise so the pipeline can continue
       });
     }
   }
@@ -70,7 +72,18 @@ export class Pipeline {
     return this;
   }
 
+  public async init(): Promise<void> {
+    if (this.llmInitPromise) {
+      await this.llmInitPromise;
+    }
+  }
+
   public async process(text: string): Promise<QirrelContext> {
+    // Wait for LLM initialization if needed before processing
+    if (this.llmInitPromise) {
+      await this.llmInitPromise;
+    }
+
     // Create initial context with empty data
     const initialContext: QirrelContext = {
       meta: {

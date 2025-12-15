@@ -69,13 +69,13 @@ export class FallbackLLMAdapterWrapper {
     }
   }
 
-  async generateWithIntentResult(
+  async generateWithContext(
     input: QirrelContext,
     promptTemplate: string,
     options?: Partial<LLMConfig>,
   ): Promise<QirrelContext> {
     try {
-      return await this.primaryAdapter.generateWithIntentResult(
+      return await this.primaryAdapter.generateWithContext(
         input,
         promptTemplate,
         options,

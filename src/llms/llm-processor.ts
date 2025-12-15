@@ -8,7 +8,7 @@ export const createLLMProcessor = (
   return async (input: QirrelContext): Promise<QirrelContext> => {
     try {
       // Use the adapter to process the full context
-      const result = await options.adapter.generateWithIntentResult(
+      const result = await options.adapter.generateWithContext(
         input,
         options.promptTemplate,
         options.config,
@@ -34,7 +34,7 @@ export const createLLMEntityExtractor = (
         return input;
       }
 
-      const enhancedPrompt = `${promptTemplate}\n\nText: "${input.data.text}"\n\nPlease extract entities in JSON format with structure: {entities: [{type: string, value: string, start: number, end: number}]}`;
+      const enhancedPrompt = `${promptTemplate}\n\nText: ${JSON.stringify(input.data.text)}\n\nPlease extract entities in JSON format with structure: {entities: [{type: string, value: string, start: number, end: number}]}`;
 
       const response = await adapter.generate(enhancedPrompt, config);
 

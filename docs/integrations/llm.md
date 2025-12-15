@@ -78,18 +78,14 @@ setTimeout(async () => {
 You can add LLM-based processing components to your pipeline:
 
 ```ts
-import { Pipeline, type PipelineComponent, type QirrelContext } from 'qirrel';
+import { Pipeline, type PipelineComponent, type QirrelContext, type LLMAdapter } from 'qirrel';
 
-const llmEnhancedProcessor: PipelineComponent = async (input: QirrelContext): Promise<QirrelContext> => {
-  if (input.data) {
-    const pipeline = new Pipeline('./config-with-llm.yaml');
-    const llmAdapter = pipeline.getLLMAdapter();
-
-    if (llmAdapter) {
-      // Use LLM to analyze sentiment, categorize content, etc.
+// Factory function to create processor with injected adapter
+function createLLMEnhancedProcessor(llmAdapter: LLMAdapter | undefined): PipelineComponent {
+  return async (input: QirrelContext): Promise<QirrelContext> => {
+    if (input.data && llmAdapter) {
       const analysis = await llmAdapter.analyzeText(`Analyze this text for sentiment: ${input.data.text}`);
 
-      // Add LLM-derived entities or metadata to the result
       input.data.entities.push({
         type: 'llm_analysis',
         value: analysis.sentiment || 'neutral',
@@ -97,12 +93,14 @@ const llmEnhancedProcessor: PipelineComponent = async (input: QirrelContext): Pr
         end: input.data.text.length
       });
     }
-  }
 
-  return input;
-};
+    return input;
+  };
+}
 
-const pipeline = new Pipeline();
+// Usage:
+const pipeline = new Pipeline('./config-with-llm.yaml');
+const llmEnhancedProcessor = createLLMEnhancedProcessor(pipeline.getLLMAdapter());
 pipeline.addLLMProcessor(llmEnhancedProcessor);
 ```
 
@@ -202,6 +200,28 @@ Currently, Qirrel supports Google's Gemini models:
 - **gemini-2.5-flash**: Fast, cost-effective model for most tasks
 - **gemini-2.0-flash**: Alternative flash model
 - **gemini-1.5-pro**: More capable model for complex tasks
+
+### OpenAI Compatible APIs
+
+Qirrel also supports any OpenAI-compatible API endpoint:
+
+- **OpenAI**: Official OpenAI models (gpt-3.5-turbo, gpt-4, etc.)
+- **Azure OpenAI**: Microsoft's Azure OpenAI service
+- **Anthropic via Bedrock**: Anthropic models through AWS Bedrock
+- **Mistral AI**: Mistral models with OpenAI-compatible API
+- **Local LLMs**: Self-hosted models via LM Studio, Ollama, etc.
+- **Custom endpoints**: Any service implementing the OpenAI API specification
+
+To use OpenAI-compatible endpoints, configure your provider as "openai" and specify the appropriate base URL:
+
+```yaml
+llm:
+  enabled: true
+  provider: openai                 # Use OpenAI-compatible provider
+  apiKey: your-api-key
+  baseUrl: https://api.openai.com/v1    # Default OpenAI URL, or your custom endpoint
+  model: gpt-3.5-turbo             # Model to use
+```
 
 The provider system is designed to support additional LLM providers in the future through the adapter pattern.
 
