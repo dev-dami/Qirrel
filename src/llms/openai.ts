@@ -10,6 +10,11 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
     super(config, enableCache);
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || "https://api.openai.com/v1";
+
+    // Validate baseUrl format
+    if (!this.baseUrl.match(/^https?:\/\/.+/)) {
+      console.warn(`Invalid baseUrl format: ${this.baseUrl}`);
+    }
   }
 
   public async generate(
@@ -28,14 +33,34 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
     };
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      let timeoutId: NodeJS.Timeout | null = null;
+      let controller: AbortController | undefined;
+
+      if (config.timeout && config.timeout > 0) {
+        controller = new AbortController();
+        timeoutId = setTimeout(() => {
+          controller!.abort();
+        }, config.timeout);
+      }
+
+      const fetchOptions: RequestInit = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(requestBody),
-      });
+      };
+
+      if (controller) {
+        fetchOptions.signal = controller.signal;
+      }
+
+      const response = await fetch(`${this.baseUrl}/chat/completions`, fetchOptions);
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -53,7 +78,22 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
         model: data.model,
       };
     } catch (error) {
-      throw new Error(`OpenAI API request failed: ${error}`);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timed out after ${config.timeout} ms`);
+      }
+
+      // Sanitize the error to prevent leaking sensitive data
+      if (error instanceof Error) {
+        // Log the full error for internal debugging purposes (not exposed to users)
+        console.error('OpenAI API request failed:', error);
+
+        // Throw a sanitized error without sensitive details
+        throw new Error(`OpenAI API request failed: ${error.name} - ${error.message}`);
+      } else {
+        // Handle non-Error objects
+        console.error('OpenAI API request failed:', error);
+        throw new Error('OpenAI API request failed');
+      }
     }
   }
 }

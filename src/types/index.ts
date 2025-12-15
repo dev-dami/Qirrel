@@ -1,4 +1,5 @@
 import type { Token } from "../core/Tokenizer";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Entity {
   type: string;
@@ -38,25 +39,30 @@ export interface QirrelContext {
     text: string;
     tokens: Token[];
     entities: Entity[];
+    llmResponse?: import('../llms/types').LLMResponse;
   };
 }
 
 /**
  * Factory function to create a QirrelContext with default values
  * @param data - The text processing data to include in the context
+ * @param model - Optional LLM model identifier (defaults to 'gemini-2.5-flash')
  * @returns A QirrelContext with sensible defaults
  */
-export function createQirrelContext(data?: QirrelContext['data']): QirrelContext {
+export function createQirrelContext(
+  data?: QirrelContext['data'],
+  model: string = 'gemini-2.5-flash'
+): QirrelContext {
   return {
     meta: {
-      requestId: 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      requestId: 'req_' + uuidv4(),
       timestamp: Date.now(),
     },
     memory: {
       cache: {}
     },
     llm: {
-      model: 'gemini-2.5-flash',
+      model: model,
       safety: {
         allowTools: true
       }

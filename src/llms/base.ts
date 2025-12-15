@@ -60,8 +60,17 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
 
       const response = await this.generate(filledPrompt, options);
 
-      // Return the input context with potentially updated data
-      return input;
+      // Store the response in the context
+      return {
+        ...input,
+        data: {
+          ...input.data,
+          text: input.data?.text || "",
+          tokens: input.data?.tokens || [],
+          entities: input.data?.entities || [],
+          llmResponse: response
+        }
+      };
     } catch (error) {
       console.warn(
         `LLM processing failed in generateWithContext: ${error}`,

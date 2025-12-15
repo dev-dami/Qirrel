@@ -20,8 +20,14 @@ export class LLMAdapterFactory {
         }
       case "openai":
       case "openai-compatible":
-        const { OpenAILLMAdapter } = await import("./openai.js");
-        return new OpenAILLMAdapter(config, enableCache);
+        {
+          try {
+            const { OpenAILLMAdapter } = await import("./openai.js");
+            return new OpenAILLMAdapter(config, enableCache);
+          } catch (err) {
+            throw new Error(`Failed to load OpenAI adapter: ${err}`);
+          }
+        }
       case "generic":
         return new GenericLLMAdapter(config, "generic", enableCache);
       default:
