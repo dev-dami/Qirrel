@@ -65,9 +65,6 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
         ...input,
         data: {
           ...input.data,
-          text: input.data?.text || "",
-          tokens: input.data?.tokens || [],
-          entities: input.data?.entities || [],
           llmResponse: response
         }
       };

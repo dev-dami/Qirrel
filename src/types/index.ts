@@ -1,4 +1,5 @@
 import type { Token } from "../core/Tokenizer";
+import type { LLMResponse } from '../llms/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Entity {
@@ -39,7 +40,7 @@ export interface QirrelContext {
     text: string;
     tokens: Token[];
     entities: Entity[];
-    llmResponse?: import('../llms/types').LLMResponse;
+    llmResponse?: LLMResponse;
   };
 }
 

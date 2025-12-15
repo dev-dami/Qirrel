@@ -11,9 +11,11 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || "https://api.openai.com/v1";
 
-    // Validate baseUrl format
-    if (!this.baseUrl.match(/^https?:\/\/.+/)) {
-      console.warn(`Invalid baseUrl format: ${this.baseUrl}`);
+    // Strictly validate baseUrl format
+    try {
+      new URL(this.baseUrl);
+    } catch (error) {
+      throw new Error(`Invalid baseUrl: ${this.baseUrl}`);
     }
   }
 
@@ -67,6 +69,10 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
       }
 
       const data = await response.json();
+
+      if (!data.choices?.[0]?.message?.content) {
+        console.warn('OpenAI API returned unexpected response structure:', data);
+      }
 
       return {
         content: data.choices[0]?.message?.content || "",
