@@ -56,7 +56,7 @@ export function createQirrelContext(
 ): QirrelContext {
   return {
     meta: {
-      requestId: 'req_' + uuidv4(),
+      requestId: uuidv4(),
       timestamp: Date.now(),
     },
     memory: {

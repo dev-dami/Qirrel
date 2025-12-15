@@ -35,7 +35,7 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
     };
 
     try {
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let controller: AbortController | undefined;
 
       if (config.timeout && config.timeout > 0) {
@@ -71,11 +71,12 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
       const data = await response.json();
 
       if (!data.choices?.[0]?.message?.content) {
-        console.warn('OpenAI API returned unexpected response structure:', data);
+        console.error('OpenAI API returned unexpected response structure:', data);
+        throw new Error('OpenAI API returned no content in response');
       }
 
       return {
-        content: data.choices[0]?.message?.content || "",
+        content: data.choices[0].message.content,
         usage: {
           promptTokens: data.usage?.prompt_tokens,
           completionTokens: data.usage?.completion_tokens,
