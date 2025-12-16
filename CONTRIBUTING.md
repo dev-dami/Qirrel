@@ -48,7 +48,9 @@ qirrel/
 │   ├── core/         # Core functionality (Tokenizer, Pipeline)
 │   ├── llms/         # LLM integration components
 │   ├── processors/   # Text processing functions
-│   └── types/        # Type definitions
+│   ├── types/        # Type definitions
+│   └── utils/        # Utility functions
+│       └── cache/    # Caching implementation
 ├── docs/            # Documentation files
 │   ├── api.md       # API reference
 │   ├── configuration.md

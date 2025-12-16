@@ -1,51 +1,24 @@
 import type { LLMResponse } from "./types";
+import type { QirrelContext } from "../types";
+import { LruCacheManager, LLMCacheManager as BaseLLMCacheManager } from "../utils/cache/CacheManager";
+import type { CacheOptions, CacheValue } from "../utils/cache/types";
 
-export interface CacheOptions {
-  maxEntries?: number;
-  ttl?: number;
-}
+// Re-export the interface and types from the new cache manager
+export type { CacheOptions, CacheValue };
 
-export class LLMCache {
-  private cache: Map<
-    string,
-    { response: LLMResponse; timestamp: number; ttl: number }
-  >;
-  private maxEntries: number;
+export class GeneralCache {
+  private cache: LruCacheManager;
 
   constructor(options: CacheOptions = {}) {
-    this.cache = new Map();
-    this.maxEntries = options.maxEntries || 1000;
+    this.cache = new LruCacheManager(options);
   }
 
-  public get(key: string): LLMResponse | undefined {
-    const entry = this.cache.get(key);
-
-    if (!entry) {
-      return undefined;
-    }
-
-    // Check if the entry has expired
-    if (Date.now() - entry.timestamp > entry.ttl) {
-      this.cache.delete(key);
-      return undefined;
-    }
-
-    return entry.response;
+  public get<T = CacheValue>(key: string): T | undefined {
+    return this.cache.get<T>(key);
   }
 
-  public set(key: string, response: LLMResponse, ttl: number = 300000): void {
-    if (this.cache.size >= this.maxEntries) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
-      }
-    }
-
-    this.cache.set(key, {
-      response,
-      timestamp: Date.now(),
-      ttl,
-    });
+  public set(key: string, value: CacheValue, ttl?: number): void {
+    this.cache.set(key, value, ttl);
   }
 
   public clear(): void {
@@ -57,21 +30,31 @@ export class LLMCache {
   }
 
   public size(): number {
-    return this.cache.size;
+    return this.cache.size();
   }
 
   public has(key: string): boolean {
-    const entry = this.cache.get(key);
-    if (!entry) {
-      return false;
-    }
+    return this.cache.has(key);
+  }
 
-    // Check if the entry has expired
-    if (Date.now() - entry.timestamp > entry.ttl) {
-      this.cache.delete(key);
-      return false;
-    }
+  /**
+   * Generate a hash key from input data for consistent cache key generation
+   */
+  public static generateKey(prefix: string, data: any): string {
+    return LruCacheManager.generateKey(prefix, data);
+  }
+}
 
-    return true;
+export class LLMCache extends BaseLLMCacheManager {
+  constructor(options: CacheOptions = {}) {
+    super(options);
+  }
+
+  public get<T = LLMResponse>(key: string): T | undefined {
+    return super.get<T>(key);
+  }
+
+  public set(key: string, value: LLMResponse, ttl?: number): void {
+    super.set(key, value, ttl);
   }
 }

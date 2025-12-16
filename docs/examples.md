@@ -244,4 +244,103 @@ async function technicalTextProcessing() {
 technicalTextProcessing();
 ```
 
+## Caching Examples
+
+### Basic Caching Usage
+
+Qirrel automatically caches pipeline results based on configuration:
+
+```ts
+import { Pipeline } from 'qirrel';
+
+async function basicCachingExample() {
+  const pipeline = new Pipeline();
+
+  // First call processes the text (slow)
+  const start1 = Date.now();
+  const result1 = await pipeline.process('Hello world!');
+  const time1 = Date.now() - start1;
+  console.log(`First call took ${time1}ms`);
+
+  // Second call returns from cache (fast)
+  const start2 = Date.now();
+  const result2 = await pipeline.process('Hello world!');
+  const time2 = Date.now() - start2;
+  console.log(`Second call took ${time2}ms`);
+  console.log(`Speed improvement: ${time1/time2}x faster`);
+}
+
+basicCachingExample();
+```
+
+### Manual Cache Management
+
+You can interact directly with the cache for more control:
+
+```ts
+import { Pipeline } from 'qirrel';
+
+async function manualCacheExample() {
+  const pipeline = new Pipeline();
+
+  // Check if result is already cached
+  const text = 'Sample text for processing';
+  if (!pipeline.isCached(text)) {
+    console.log('Processing text...');
+    const result = await pipeline.process(text);
+    // Result is automatically cached
+  } else {
+    console.log('Loading from cache...');
+    const cachedResult = pipeline.getCached(text);
+    console.log('Cached result:', cachedResult);
+  }
+}
+```
+
+### Custom Cache Configuration
+
+Configure caching behavior via YAML configuration:
+
+```yaml
+# config-with-cache.yaml
+cache:
+  maxEntries: 500    # Limit cache to 500 items
+  ttl: 600000        # Keep items for 10 minutes
+```
+
+```ts
+import { Pipeline } from 'qirrel';
+
+async function configBasedCaching() {
+  // Load custom cache configuration
+  const pipeline = new Pipeline('./config-with-cache.yaml');
+
+  const result = await pipeline.process('Text with configured cache');
+  console.log('Processed with custom cache settings');
+}
+```
+
+### Direct Cache Manager Usage
+
+Use the cache manager directly for custom caching needs:
+
+```ts
+import { LruCacheManager } from 'qirrel';
+
+async function directCacheUsage() {
+  // Create a custom cache
+  const cache = new LruCacheManager({
+    maxEntries: 100,
+    ttl: 300000  // 5 minutes
+  });
+
+  // Store arbitrary data in cache
+  cache.set('my-key', { data: 'important information' });
+  const cachedData = cache.get('my-key');
+
+  console.log('Cached data:', cachedData);
+  console.log('Cache size:', cache.size());
+}
+```
+
 These examples demonstrate the flexibility and power of Qirrel for various text processing tasks. Customize the components and configurations to suit your specific use case.

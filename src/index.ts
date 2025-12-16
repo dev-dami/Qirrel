@@ -1,5 +1,7 @@
 export { Pipeline } from "./core/pipeline";
+export { PipelineEvent } from "./core/Events";
 export { Tokenizer } from "./core/Tokenizer";
+export { LruCacheManager, LLMCacheManager, ContextCacheManager } from "./utils/cache/CacheManager";
 export * from "./processors";
 export * from "./adapters";
 export * from "./llms";

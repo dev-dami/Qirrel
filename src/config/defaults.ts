@@ -12,6 +12,10 @@ export interface MiniparseConfig {
     lowercase: boolean;
     mergeSymbols: boolean;
   };
+  cache?: {
+    maxEntries?: number;
+    ttl?: number; // Time to live in milliseconds
+  };
   speech: {
     removeFillerWords: boolean;
     detectRepetitions: boolean;
@@ -46,6 +50,10 @@ export const defaultConfig: MiniparseConfig = {
   tokenizer: {
     lowercase: true,
     mergeSymbols: false,
+  },
+  cache: {
+    maxEntries: 1000,
+    ttl: 300000, // 5 minutes default
   },
   speech: {
     removeFillerWords: true,
