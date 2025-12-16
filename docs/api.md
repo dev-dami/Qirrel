@@ -52,6 +52,18 @@ Returns the initialized LLM adapter if available.
 #### `addLLMProcessor(processor: PipelineComponent) => this`
 Adds a processor that uses LLM capabilities.
 
+#### `getCacheManager() => LruCacheManager`
+Returns the cache manager instance used by the pipeline.
+
+#### `isCached(text: string) => boolean`
+Checks if a result is already cached for the given text.
+
+#### `getCached(text: string) => QirrelContext | undefined`
+Retrieves a cached result for the given text, if available.
+
+#### `setCached(text: string, result: QirrelContext, ttl?: number) => void`
+Caches a result for the given text with an optional TTL.
+
 **Example:**
 ```ts
 import { Pipeline } from 'qirrel';
@@ -250,6 +262,66 @@ interface TokenizerOptions {
   lowercase?: boolean;     // Convert alphabetic tokens to lowercase
   mergeSymbols?: boolean;  // Merge consecutive symbol tokens
 }
+
+### `CacheOptions`
+Configuration options for cache managers.
+
+```ts
+interface CacheOptions {
+  maxEntries?: number;   // Maximum number of entries to store (default: 1000)
+  ttl?: number;          // Time-to-live in milliseconds (default: 300000 - 5 minutes)
+}
+```
+```
+
+### `LruCacheManager`
+A cache manager implementation using LRU (Least Recently Used) eviction policy with TTL (Time To Live) support.
+
+**Constructor:**
+```ts
+new LruCacheManager(options?: CacheOptions)
+```
+
+**Parameters:**
+- `options?: CacheOptions` - Configuration options for the cache
+
+**Methods:**
+
+#### `get<T>(key: string) => T | undefined`
+Retrieves a value from the cache.
+
+#### `set(key: string, value: any, ttl?: number) => void`
+Sets a value in the cache with an optional TTL.
+
+#### `has(key: string) => boolean`
+Checks if a key exists in the cache.
+
+#### `delete(key: string) => boolean`
+Deletes a key from the cache.
+
+#### `clear() => void`
+Clears all entries from the cache.
+
+#### `size() => number`
+Returns the current size of the cache.
+
+#### `maxSize() => number`
+Returns the maximum capacity of the cache.
+
+### `LLMCacheManager`
+A specialized cache manager for LLM responses, extending LruCacheManager.
+
+**Example:**
+```ts
+import { LruCacheManager } from 'qirrel';
+
+const cache = new LruCacheManager({
+  maxEntries: 500,
+  ttl: 600000  // 10 minutes
+});
+
+cache.set('key', 'value');
+const value = cache.get('key');
 ```
 
 ### `PipelineComponent`

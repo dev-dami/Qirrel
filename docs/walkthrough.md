@@ -124,6 +124,35 @@ Qirrel is designed to be extended through:
 3. **Pipeline Modification**: Runtime addition of processors via `addCustomProcessor()`
 4. **LLM Adapters**: New providers can be added by implementing the LLM adapter interface
 
+## Caching Architecture
+
+Qirrel includes a sophisticated caching system to improve performance:
+
+### Cache Management (src/utils/cache/)
+The caching system is organized in a dedicated utilities folder:
+
+- **Cache Implementation**: Uses the `lru-cache` library for production-grade caching
+- **Multiple Cache Types**: Different cache managers for different use cases (LLM responses, contexts, etc.)
+- **Configurable**: Cache behavior can be controlled via configuration files
+- **Automatic**: Pipeline-level caching happens automatically based on configuration
+
+### Cache Structure
+```
+src/utils/cache/
+├── cache.ts          # Core cache implementation
+├── CacheManager.ts   # High-level cache managers
+├── cached-components.ts # Component caching utilities
+├── types.ts          # Cache-related type definitions
+└── index.ts          # Export index
+```
+
+The cache system provides:
+- LRU (Least Recently Used) eviction policy
+- TTL (Time To Live) with automatic expiration
+- Pipeline-level result caching
+- Component-level operation caching
+- Configurable maximum entry limits
+
 ## File Organization
 
 The project structure follows a logical separation of concerns:
@@ -136,7 +165,9 @@ src/
 ├── config/         # Configuration loading and defaults
 ├── llms/           # LLM integration components
 ├── adapters/       # Various adapter implementations
-└── api/            # Public API entry points
+├── api/            # Public API entry points
+└── utils/          # Utility functions and cache system
+    └── cache/      # Caching implementation
 ```
 
 This architecture enables maintainable, testable, and extensible code while providing a clean public API for consumers.

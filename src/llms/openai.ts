@@ -61,19 +61,25 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, fetchOptions);
 
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null; // Set to null after clearing
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       }
 
       const data = await response.json();
 
-      if (data.choices?.[0]?.message?.content == null) {
+      const content = data.choices?.[0]?.message?.content;
+      if (content == null) {
         console.error('OpenAI API returned unexpected response structure:', data);
         throw new Error('OpenAI API returned no content in response');
       }
 
       return {
-        content: data.choices[0].message.content,
+        content,
         usage: {
           promptTokens: data.usage?.prompt_tokens,
           completionTokens: data.usage?.completion_tokens,
@@ -82,6 +88,11 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
         model: data.model,
       };
     } catch (error) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`Request timed out after ${config.timeout} ms`);
       }
@@ -97,10 +108,6 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
         // Handle non-Error objects
         console.error('OpenAI API request failed:', error);
         throw new Error('OpenAI API request failed');
-      }
-    } finally {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
       }
     }
   }

@@ -70,6 +70,60 @@ if (llmAdapter) {
 }
 ```
 
+## Caching
+
+Qirrel includes built-in caching functionality to improve performance by storing frequently accessed results:
+
+```ts
+import { Pipeline, LruCacheManager } from 'qirrel';
+
+// The pipeline automatically uses caching based on configuration
+const pipeline = new Pipeline();
+
+// Access the cache manager directly if needed
+const cacheManager = pipeline.getCacheManager();
+
+// Custom cache usage
+const cache = new LruCacheManager({
+  maxEntries: 1000,  // Maximum number of cached items
+  ttl: 300000        // Time-to-live in milliseconds (5 minutes)
+});
+
+// Check if a result is already cached
+if (pipeline.isCached('some text')) {
+  const cachedResult = pipeline.getCached('some text');
+  console.log('Using cached result');
+} else {
+  const result = await pipeline.process('some text');
+  console.log('Processing new text');
+}
+```
+
+## Pipeline Lifecycle Events
+
+Monitor and react to pipeline execution with comprehensive lifecycle events:
+
+```ts
+import { Pipeline, PipelineEvent } from 'qirrel';
+
+const pipeline = new Pipeline();
+
+// Subscribe to pipeline events
+pipeline.on(PipelineEvent.RunStart, (payload) => {
+  console.log('Pipeline started:', payload.context.meta?.requestId);
+});
+
+pipeline.on(PipelineEvent.ProcessorEnd, (payload) => {
+  console.log(`Processor ${payload.processorName} completed in ${payload.duration}ms`);
+});
+
+pipeline.on(PipelineEvent.RunEnd, (payload) => {
+  console.log('Pipeline completed in', payload.duration, 'ms');
+});
+
+const result = await pipeline.process('Your text here');
+```
+
 ## Use Cases
 
 Qirrel is perfect for developers building solutions for:
@@ -88,6 +142,8 @@ Qirrel is perfect for developers building solutions for:
 - [Basic Usage](./docs/usage/basic.md)
 - [Advanced Usage](./docs/usage/advanced.md)
 - [LLM Integration](./docs/integrations/llm.md)
+- [Pipeline Events](./docs/events.md)
+- [Caching](./docs/usage/caching.md)
 
 ## Contributing
 We welcome contributions from the community! Please read our [Contributing Guide](./docs/contributing.md) for more information.

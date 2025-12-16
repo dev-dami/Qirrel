@@ -1,5 +1,5 @@
 import type { QirrelContext } from "../types";
-import { LLMCache } from "./cache";
+import { LLMCache, GeneralCache } from "./cache";
 import { DefaultFallbackHandler, type FallbackHandler } from "./fallback";
 import type {
   LLMAdapter,

@@ -50,6 +50,10 @@ llm:
   temperature: 0.7
   maxTokens: 1024
   timeout: 30000
+
+cache:
+  maxEntries: 1000
+  ttl: 300000
 ```
 
 ## Configuration Sections
@@ -161,3 +165,12 @@ export QIRREL_LLM_API_KEY=your_api_key_here
 ```
 
 The library will automatically use this value if the `apiKey` is not set directly in the configuration file.
+
+### Cache Configuration (`cache`)
+
+Controls caching behavior to improve performance:
+
+- `maxEntries`: Maximum number of items to store in the cache (default: 1000)
+- `ttl`: Time-to-live for cached items in milliseconds (default: 300000, which is 5 minutes)
+
+When `maxEntries` is set to 0, caching is disabled entirely. The cache uses an LRU (Least Recently Used) eviction policy to manage space when the maximum is reached.

@@ -1,9 +1,9 @@
 import { extract, extractEmailsOnly, extractPhonesOnly, extractUrlsOnly, extractNumbersOnly } from '../src/processors/extract';
 import { QirrelContext } from '../src/types';
 
-describe('Extraction Functions', () => {
+describe('Extraction Pipeline Components', () => {
   describe('extract', () => {
-    it('should extract emails, phones, URLs, and numbers from text', () => {
+    it('should extract emails, phones, URLs, and numbers from text', async () => {
       const input: QirrelContext = {
         meta: {
           requestId: 'test',
@@ -23,7 +23,7 @@ describe('Extraction Functions', () => {
         }
       };
 
-      const result = extract(input);
+      const result = await extract.run(input);
 
       // Check that entities were found
       expect(result.data?.entities).not.toHaveLength(0);
@@ -47,7 +47,7 @@ describe('Extraction Functions', () => {
       expect(numberEntity).toBeTruthy();
     });
 
-    it('should handle text with no extractable entities', () => {
+    it('should handle text with no extractable entities', async () => {
       const input: QirrelContext = {
         meta: {
           requestId: 'test',
@@ -67,13 +67,13 @@ describe('Extraction Functions', () => {
         }
       };
 
-      const result = extract(input);
+      const result = await extract.run(input);
       expect(result.data?.entities).toHaveLength(0);
     });
   });
 
   describe('extractEmailsOnly', () => {
-    it('should extract only emails', () => {
+    it('should extract only emails', async () => {
       const input: QirrelContext = {
         meta: {
           requestId: 'test',
@@ -93,7 +93,7 @@ describe('Extraction Functions', () => {
         }
       };
 
-      const result = extractEmailsOnly(input);
+      const result = await extractEmailsOnly.run(input);
       expect(result.data?.entities).toHaveLength(1);
       const emailEntity = result.data?.entities[0];
       if (emailEntity) {
@@ -108,7 +108,7 @@ describe('Extraction Functions', () => {
   });
 
   describe('extractPhonesOnly', () => {
-    it('should extract phone numbers', () => {
+    it('should extract phone numbers', async () => {
       const input: QirrelContext = {
         meta: {
           requestId: 'test',
@@ -128,7 +128,7 @@ describe('Extraction Functions', () => {
         }
       };
 
-      const result = extractPhonesOnly(input);
+      const result = await extractPhonesOnly.run(input);
 
       // Check that at least one phone number was found
       const phoneEntities = result.data?.entities.filter(e => e.type === 'phone') || [];
@@ -137,7 +137,7 @@ describe('Extraction Functions', () => {
   });
 
   describe('extractUrlsOnly', () => {
-    it('should extract only URLs', () => {
+    it('should extract only URLs', async () => {
       const input: QirrelContext = {
         meta: {
           requestId: 'test',
@@ -157,7 +157,7 @@ describe('Extraction Functions', () => {
         }
       };
 
-      const result = extractUrlsOnly(input);
+      const result = await extractUrlsOnly.run(input);
       expect(result.data?.entities).toHaveLength(2);
 
       const urls = result.data?.entities.map(e => e.value) || [];
@@ -167,7 +167,7 @@ describe('Extraction Functions', () => {
   });
 
   describe('extractNumbersOnly', () => {
-    it('should extract different number formats', () => {
+    it('should extract different number formats', async () => {
       const input: QirrelContext = {
         meta: {
           requestId: 'test',
@@ -187,7 +187,7 @@ describe('Extraction Functions', () => {
         }
       };
 
-      const result = extractNumbersOnly(input);
+      const result = await extractNumbersOnly.run(input);
       expect(result.data?.entities).toHaveLength(3);
 
       const numbers = result.data?.entities.map(e => e.value) || [];

@@ -3,94 +3,109 @@ import { QirrelContext, Entity } from "../types";
 import validator from "validator";
 import { parsePhoneNumber } from 'libphonenumber-js';
 
-export const extract: PipelineComponent = (
-  input: QirrelContext,
-): QirrelContext => {
-  try {
-    if (input.data) {
-      extractEmails(input.data);
+export const extract: PipelineComponent = {
+  name: "extract",
+  version: "1.0.0",
+  cacheable: true,
+  run: (input: QirrelContext): Promise<QirrelContext> => {
+    try {
+      if (input.data) {
+        extractEmails(input.data);
+      }
+    } catch (e) {
+      console.warn("Email extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("Email extraction failed:", e);
-  }
 
-  try {
-    if (input.data) {
-      extractPhones(input.data);
+    try {
+      if (input.data) {
+        extractPhones(input.data);
+      }
+    } catch (e) {
+      console.warn("Phone extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("Phone extraction failed:", e);
-  }
 
-  try {
-    if (input.data) {
-      extractUrls(input.data);
+    try {
+      if (input.data) {
+        extractUrls(input.data);
+      }
+    } catch (e) {
+      console.warn("URL extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("URL extraction failed:", e);
-  }
 
-  try {
-    if (input.data) {
-      extractNumbers(input.data);
+    try {
+      if (input.data) {
+        extractNumbers(input.data);
+      }
+    } catch (e) {
+      console.warn("Number extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("Number extraction failed:", e);
-  }
 
-  return input;
+    return Promise.resolve(input);
+  }
 };
 
-export const extractEmailsOnly: PipelineComponent = (
-  input: QirrelContext,
-): QirrelContext => {
-  try {
-    if (input.data) {
-      extractEmails(input.data);
+export const extractEmailsOnly: PipelineComponent = {
+  name: "extractEmailsOnly",
+  version: "1.0.0",
+  cacheable: true,
+  run: (input: QirrelContext): Promise<QirrelContext> => {
+    try {
+      if (input.data) {
+        extractEmails(input.data);
+      }
+    } catch (e) {
+      console.warn("Email extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("Email extraction failed:", e);
+    return Promise.resolve(input);
   }
-  return input;
 };
 
-export const extractPhonesOnly: PipelineComponent = (
-  input: QirrelContext,
-): QirrelContext => {
-  try {
-    if (input.data) {
-      extractPhones(input.data);
+export const extractPhonesOnly: PipelineComponent = {
+  name: "extractPhonesOnly",
+  version: "1.0.0",
+  cacheable: true,
+  run: (input: QirrelContext): Promise<QirrelContext> => {
+    try {
+      if (input.data) {
+        extractPhones(input.data);
+      }
+    } catch (e) {
+      console.warn("Phone extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("Phone extraction failed:", e);
+    return Promise.resolve(input);
   }
-  return input;
 };
 
-export const extractUrlsOnly: PipelineComponent = (
-  input: QirrelContext,
-): QirrelContext => {
-  try {
-    if (input.data) {
-      extractUrls(input.data);
+export const extractUrlsOnly: PipelineComponent = {
+  name: "extractUrlsOnly",
+  version: "1.0.0",
+  cacheable: true,
+  run: (input: QirrelContext): Promise<QirrelContext> => {
+    try {
+      if (input.data) {
+        extractUrls(input.data);
+      }
+    } catch (e) {
+      console.warn("URL extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("URL extraction failed:", e);
+    return Promise.resolve(input);
   }
-  return input;
 };
 
-export const extractNumbersOnly: PipelineComponent = (
-  input: QirrelContext,
-): QirrelContext => {
-  try {
-    if (input.data) {
-      extractNumbers(input.data);
+export const extractNumbersOnly: PipelineComponent = {
+  name: "extractNumbersOnly",
+  version: "1.0.0",
+  cacheable: true,
+  run: (input: QirrelContext): Promise<QirrelContext> => {
+    try {
+      if (input.data) {
+        extractNumbers(input.data);
+      }
+    } catch (e) {
+      console.warn("Number extraction failed:", e);
     }
-  } catch (e) {
-    console.warn("Number extraction failed:", e);
+    return Promise.resolve(input);
   }
-  return input;
 };
 
 function extractEmails(inputData: { text: string; entities: Entity[] }): void {
