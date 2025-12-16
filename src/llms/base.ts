@@ -64,10 +64,10 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
       return {
         ...input,
         data: {
+          ...input.data,
           text: text,
           tokens: tokens,
           entities: entities,
-          ...input.data,
           llmResponse: response
         }
       };

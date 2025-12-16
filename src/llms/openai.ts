@@ -34,8 +34,9 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
       max_tokens: config.maxTokens,
     };
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     try {
-      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       let controller: AbortController | undefined;
 
       if (config.timeout && config.timeout > 0) {
@@ -60,17 +61,13 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
 
       const response = await fetch(`${this.baseUrl}/chat/completions`, fetchOptions);
 
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       }
 
       const data = await response.json();
 
-      if (!data.choices?.[0]?.message?.content) {
+      if (data.choices?.[0]?.message?.content == null) {
         console.error('OpenAI API returned unexpected response structure:', data);
         throw new Error('OpenAI API returned no content in response');
       }
@@ -100,6 +97,10 @@ export class OpenAILLMAdapter extends BaseLLMAdapter {
         // Handle non-Error objects
         console.error('OpenAI API request failed:', error);
         throw new Error('OpenAI API request failed');
+      }
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     }
   }
