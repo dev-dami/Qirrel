@@ -5,10 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [CACHING IMPLEMENTATION 0.3.0]
+
+### Added
+- Comprehensive caching system using lru-cache library for production-grade performance
+- Pipeline-level caching to cache full processing results with configurable TTL
+- Component-level caching for individual processor operations
+- LruCacheManager, LLMCacheManager, and ContextCacheManager classes with proper type safety
+- Caching configuration options in YAML config (maxEntries, ttl)
+- Cache management methods: get, set, has, delete, clear, size, maxSize
+- New documentation files for caching usage and configuration
+- Direct cache access methods in Pipeline class (getCacheManager, isCached, getCached, setCached)
+
+### Changed
+- Updated all processors to properly implement PipelineComponent interface with name, version, cacheable, and run properties
+- Modified cache key generation in BaseLLMAdapter to handle empty model strings with fallback
+- Refactored tests to work with async processors and proper PipelineComponent interface
+- Updated API documentation to include caching-related methods and classes
+- Enhanced configuration system to include cache settings
+- Updated documentation with comprehensive caching examples and best practices
+
+### Fixed
+- Cache key generation issue when model is an empty string
+- Type errors related to importing constants with import type
+- Test failures due to processors not implementing PipelineComponent interface properly
+- Consistency in default model usage across all LLM adapter implementations
+
 ## [QIRRELCONTEXT IMPLEMENTATION 0.2.0]
 
 ### Added
-- QirrelContext as the canonical context 
+- QirrelContext as the canonical context
 - Namespaced fields: meta (requestId, timestamp, source, trace), memory (shortTerm, longTerm, cache), and llm (model, temperature, safety)
 - JSON serializability support for context persistence and transport
 - Backward compatibility safeguards for existing integrations

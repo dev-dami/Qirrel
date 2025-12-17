@@ -47,12 +47,14 @@ export interface QirrelContext {
 /**
  * Factory function to create a QirrelContext with default values
  * @param data - The text processing data to include in the context
- * @param model - Optional LLM model identifier (defaults to 'gemini-2.5-flash')
+ * @param model - Optional LLM model identifier (defaults to DEFAULT_LLM_MODEL)
  * @returns A QirrelContext with sensible defaults
  */
+export const DEFAULT_LLM_MODEL = 'gemini-2.5-flash';
+
 export function createQirrelContext(
   data?: QirrelContext['data'],
-  model: string = 'gemini-2.5-flash'
+  model: string = DEFAULT_LLM_MODEL
 ): QirrelContext {
   return {
     meta: {

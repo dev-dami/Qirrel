@@ -1,4 +1,5 @@
 import type { QirrelContext } from "../types";
+import { DEFAULT_LLM_MODEL } from "../types";
 import { BaseLLMAdapter } from "./base";
 import type { LLMConfig, LLMResponse } from "./types";
 
@@ -45,7 +46,7 @@ export class GeminiLLMAdapter extends BaseLLMAdapter {
 
     const config = this.mergeConfig(options);
     const genModel = this.genAI.getGenerativeModel({
-      model: config.model || "gemini-2.5-flash",
+      model: config.model || DEFAULT_LLM_MODEL,
     });
 
     try {
@@ -71,7 +72,7 @@ export class GeminiLLMAdapter extends BaseLLMAdapter {
 
       return {
         content: text,
-        model: config.model || "gemini-2.5-flash",
+        model: config.model || DEFAULT_LLM_MODEL,
       };
     } catch (error) {
       throw new Error(`Gemini API request failed: ${error}`);

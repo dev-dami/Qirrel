@@ -1,4 +1,5 @@
 import type { QirrelContext } from "../types";
+import { DEFAULT_LLM_MODEL } from "../types";
 import { LLMCache, GeneralCache } from "./cache";
 import { DefaultFallbackHandler, type FallbackHandler } from "./fallback";
 import type {
@@ -88,7 +89,8 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   }
 
   protected getCacheKey(prompt: string, config: LLMConfig): string {
-    return `${prompt}|${config.model}|${config.temperature}|${config.maxTokens}`;
+    const model = config.model || DEFAULT_LLM_MODEL; // Use the same fallback as other call sites
+    return `${prompt}|${model}|${config.temperature}|${config.maxTokens}`;
   }
 
   protected async generateWithCache(
