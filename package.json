@@ -1,6 +1,6 @@
 {
   "name": "qirrel",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Qirrel is a sophisticated and extensible NLP library for comprehensive text processing, tokenization, and analysis.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
