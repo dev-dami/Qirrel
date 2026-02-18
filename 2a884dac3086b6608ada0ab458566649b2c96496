@@ -1,0 +1,51 @@
+package.json
+  fd8dbd8fe216866a 15
+bench/framework-comparison.bench.ts
+  fd8dbd8fe216866a 3,113-121,123-124,153-154,157-164,166-167,170-172
+docs/framework-comparison.md
+  fd8dbd8fe216866a 1-46
+tests/agent-native.test.ts
+  fd8dbd8fe216866a 37,64-82
+tests/docs-connectivity.test.ts
+  fd8dbd8fe216866a 16-18
+docs/benchmarks.md
+  fd8dbd8fe216866a 3,5,7,9,16-18,20,26,28-31,33,35-48,50-53,55,57-60,62,64-66
+README.MD
+  fd8dbd8fe216866a 136-141,155-157
+docs/README.md
+  fd8dbd8fe216866a 3,5,7-13,24-26,30-31,33-35,37,39-42
+bench/report.bench.ts
+  fd8dbd8fe216866a 1-104
+bench/shared.ts
+  fd8dbd8fe216866a 1-48
+docs/agent-native.md
+  fd8dbd8fe216866a 3,5,7,9-15,17,20,23-24,30,33-34,40,42,48,54,57,60,62-66,68,70-98,101,103-105
+src/agent/qirrel-tools.ts
+  fd8dbd8fe216866a 25-46,155-178,180-188
+docs/benchmark-report.md
+  fd8dbd8fe216866a 1-48
+tests/mcp-handler.test.ts
+  fd8dbd8fe216866a 37-38,93-110
+bench/agent-native.bench.ts
+  fd8dbd8fe216866a 4,9-17,21-22,46,48-50,52,55-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "2a884dac3086b6608ada0ab458566649b2c96496",
+  "prompts": {
+    "fd8dbd8fe216866a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019c6f74-14bf-7263-8f1c-1082fc3dcd04",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "dev-dami <damiade5banjo@gmail.com>",
+      "messages": [],
+      "total_additions": 592,
+      "total_deletions": 166,
+      "accepted_lines": 542,
+      "overriden_lines": 0
+    }
+  }
+}
