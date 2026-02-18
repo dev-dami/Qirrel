@@ -37,7 +37,7 @@ describe('BaseLLMAdapter', () => {
     it('should initialize with default values when not provided', () => {
       const minimalConfig: LLMConfig = { apiKey: 'test-key' };
       const minimalAdapter = new TestLLMAdapter(minimalConfig);
-      
+
       expect(minimalAdapter).toBeDefined();
     });
 
@@ -419,7 +419,7 @@ describe('BaseLLMAdapter', () => {
   describe('generateWithCache', () => {
     it('should cache responses', async () => {
       const adapterWithCache = new TestLLMAdapter(defaultConfig, true);
-      
+
       const result1 = await (adapterWithCache as any).generateWithCache('test prompt');
       const result2 = await (adapterWithCache as any).generateWithCache('test prompt');
 
@@ -428,7 +428,7 @@ describe('BaseLLMAdapter', () => {
 
     it('should work without cache', async () => {
       const adapterNoCache = new TestLLMAdapter(defaultConfig, false);
-      
+
       const result = await (adapterNoCache as any).generateWithCache('test prompt');
 
       expect(result).toBeDefined();
@@ -476,7 +476,7 @@ describe('BaseLLMAdapter', () => {
 
     it('should store response with custom TTL from options', async () => {
       const adapterWithCache = new TestLLMAdapter(defaultConfig, true);
-      
+
       await (adapterWithCache as any).generateWithCache('test', { timeout: 600000 });
 
       // Response should be cached

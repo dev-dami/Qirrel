@@ -13,7 +13,7 @@ describe('Pipeline Events', () => {
     pipeline.on(PipelineEvent.RunStart, (payload) => {
       events.push({ event: PipelineEvent.RunStart, payload });
     });
-    
+
     pipeline.on(PipelineEvent.RunEnd, (payload) => {
       events.push({ event: PipelineEvent.RunEnd, payload });
     });
@@ -31,7 +31,7 @@ describe('Pipeline Events', () => {
     pipeline.on(PipelineEvent.ProcessorStart, (payload) => {
       events.push({ event: PipelineEvent.ProcessorStart, payload });
     });
-    
+
     pipeline.on(PipelineEvent.ProcessorEnd, (payload) => {
       events.push({ event: PipelineEvent.ProcessorEnd, payload });
     });
@@ -47,10 +47,10 @@ describe('Pipeline Events', () => {
   test('should allow removing event listeners', async () => {
     const handler = jest.fn();
     pipeline.on(PipelineEvent.RunStart, handler);
-    
+
     await pipeline.process("Hello world!");
     expect(handler).toHaveBeenCalledTimes(1);
-    
+
     pipeline.off(PipelineEvent.RunStart, handler);
     await pipeline.process("Hello again!");
     expect(handler).toHaveBeenCalledTimes(1); // Should not be called again
@@ -59,10 +59,10 @@ describe('Pipeline Events', () => {
   test('should handle multiple event listeners', async () => {
     const handler1 = jest.fn();
     const handler2 = jest.fn();
-    
+
     pipeline.on(PipelineEvent.RunStart, handler1);
     pipeline.on(PipelineEvent.RunStart, handler2);
-    
+
     await pipeline.process("Hello world!");
 
     expect(handler1).toHaveBeenCalledTimes(1);
@@ -90,11 +90,11 @@ describe('Pipeline Events', () => {
   test('should have correct event payload structure', async () => {
     let runStartPayload: any;
     let processorStartPayload: any;
-    
+
     pipeline.on(PipelineEvent.RunStart, (payload) => {
       runStartPayload = payload;
     });
-    
+
     pipeline.on(PipelineEvent.ProcessorStart, (payload) => {
       processorStartPayload = payload;
     });

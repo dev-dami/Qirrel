@@ -228,7 +228,7 @@ describe('OpenAILLMAdapter', () => {
 
     it('should log error to console when response has no content', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -295,7 +295,7 @@ describe('OpenAILLMAdapter', () => {
     it('should handle AbortError specifically', async () => {
       const abortError = new Error('Aborted');
       abortError.name = 'AbortError';
-      
+
       (global.fetch as jest.Mock).mockRejectedValue(abortError);
 
       await expect(adapter.generate('Test')).rejects.toThrow('Request timed out');
@@ -304,7 +304,7 @@ describe('OpenAILLMAdapter', () => {
     it('should sanitize error messages', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
       const testError = new Error('Sensitive error details');
-      
+
       (global.fetch as jest.Mock).mockRejectedValue(testError);
 
       await expect(adapter.generate('Test')).rejects.toThrow(
@@ -320,7 +320,7 @@ describe('OpenAILLMAdapter', () => {
 
     it('should handle non-Error exceptions', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       (global.fetch as jest.Mock).mockRejectedValue('String error');
 
       await expect(adapter.generate('Test')).rejects.toThrow(
@@ -337,7 +337,7 @@ describe('OpenAILLMAdapter', () => {
     it('should include error name in sanitized message for Error objects', async () => {
       jest.spyOn(console, 'error').mockImplementation();
       const testError = new TypeError('Type error occurred');
-      
+
       (global.fetch as jest.Mock).mockRejectedValue(testError);
 
       await expect(adapter.generate('Test')).rejects.toThrow('TypeError');
@@ -472,7 +472,7 @@ describe('OpenAILLMAdapter', () => {
   describe('error logging', () => {
     it('should use console.error instead of console.warn for missing content', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({

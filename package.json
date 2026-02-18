@@ -6,6 +6,9 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "bun run typecheck",
+    "format:check": "node scripts/check-format.mjs",
     "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -14,7 +17,7 @@
     "bench:frameworks": "bun run bench/framework-comparison.bench.ts",
     "bench:report": "bun run bench/report.bench.ts",
     "mcp:start": "bun run src/bin/qirrel-mcp.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "bun run lint && bun run format:check && bun run build"
   },
   "bin": {
     "qirrel-mcp": "./dist/bin/qirrel-mcp.js"
@@ -40,18 +43,17 @@
   },
   "homepage": "https://github.com/dev-dami/qirrel#readme",
   "dependencies": {
-    "@types/node": "^24.10.9",
     "compromise": "^14.14.5",
     "emoji-regex": "^10.6.0",
     "js-yaml": "^4.1.1",
     "libphonenumber-js": "^1.12.31",
     "lru-cache": "^11.2.4",
     "tokenizers": "^0.13.3",
-    "typescript": "^5.9.3",
     "uuid": "^13.0.0",
     "validator": "^13.15.23"
   },
   "devDependencies": {
+    "@types/node": "^24.10.9",
     "@types/emoji-regex": "^9.2.2",
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
@@ -62,6 +64,7 @@
     "langchain": "^1.0.2",
     "tinybench": "^2.9.0",
     "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3",
     "zod": "^4.1.5"
   },
   "files": [

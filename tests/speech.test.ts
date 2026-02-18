@@ -63,7 +63,7 @@ describe('Speech Processing Functions', () => {
   describe('analyzeSpeechPatterns', () => {
     it('should detect filler words', () => {
       const result = analyzeSpeechPatterns('Well, um, I think like basically it works');
-      
+
       expect(result.fillerWords).toContain('Well,');
       expect(result.fillerWords).toContain('um,');
       expect(result.fillerWords).toContain('like');
@@ -78,14 +78,14 @@ describe('Speech Processing Functions', () => {
 
     it('should detect stutters', () => {
       const result = analyzeSpeechPatterns('I am n-nervous and s-stuttering');
-      
+
       expect(result.stutters).toContain('n-nervous');
       expect(result.stutters).toContain('s-stuttering');
     });
 
     it('should handle mixed speech patterns', () => {
       const result = analyzeSpeechPatterns('Well, I think I think this is um, n-nervous');
-      
+
       expect(result.fillerWords).toContain('um,');
       expect(result.stutters).toContain('n-nervous');
       expect(result.repetitions.length).toBeGreaterThanOrEqual(0); // May or may not detect repetitions depending on implementation
@@ -93,7 +93,7 @@ describe('Speech Processing Functions', () => {
 
     it('should return empty arrays for normal text', () => {
       const result = analyzeSpeechPatterns('This is normal text without speech patterns');
-      
+
       expect(result.fillerWords).toHaveLength(0);
       expect(result.repetitions).toHaveLength(0);
       expect(result.stutters).toHaveLength(0);

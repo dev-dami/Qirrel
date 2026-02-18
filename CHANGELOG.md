@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [QIRRELCONTEXT IMPLEMENTATION 0.2.0]
 
 ### Added
-- QirrelContext as the canonical context 
+- QirrelContext as the canonical context
 - Namespaced fields: meta (requestId, timestamp, source, trace), memory (shortTerm, longTerm, cache), and llm (model, temperature, safety)
 - JSON serializability support for context persistence and transport
 - Backward compatibility safeguards for existing integrations
