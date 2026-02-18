@@ -33,6 +33,14 @@ describe("mcp request handler", () => {
     expect(
       toolsResponse.result?.tools.some((tool: { name: string }) => tool.name === "qirrel.tool_help"),
     ).toBe(true);
+    expect(
+      toolsResponse.result?.tools.some(
+        (tool: { name: string; examples?: unknown[]; annotations?: object }) =>
+          tool.name === "qirrel.parse_text" &&
+          Array.isArray(tool.examples) &&
+          typeof tool.annotations === "object",
+      ),
+    ).toBe(true);
   });
 
   test("supports tools/call and returns MCP tool payload", async () => {
