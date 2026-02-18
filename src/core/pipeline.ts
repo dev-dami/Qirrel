@@ -14,7 +14,7 @@ import {
 } from "../processors";
 import { LLMAdapterFactory } from "../llms";
 import type { LLMAdapter } from "../llms";
-import type { Entity, QirrelContext } from "../types";
+import { createQirrelContext, type Entity, type QirrelContext } from "../types";
 import type { PipelineComponent, EventHandler } from "./types";
 import { PipelineEvent } from "./Events";
 import { ConfigLoader } from "../config/loader";
@@ -69,6 +69,7 @@ export class Pipeline {
           temperature: this.config.llm.temperature,
           maxTokens: this.config.llm.maxTokens,
           timeout: this.config.llm.timeout,
+          cacheTtl: this.config.llm.cacheTtl,
         },
         this.config.llm.provider,
       ).then(adapter => {
@@ -112,17 +113,13 @@ export class Pipeline {
   private async emit(event: PipelineEvent, payload?: any): Promise<void> {
     const handlers = this.eventHandlers.get(event);
     if (handlers && handlers.size > 0) {
-      const promises = Array.from(handlers).map(handler => {
+      for (const handler of handlers) {
         try {
-          const result = handler(payload);
-          return result instanceof Promise ? result : Promise.resolve();
+          await handler(payload);
         } catch (error) {
           console.error(`Error in event handler for ${event}:`, error);
-          return Promise.reject(error);
         }
-      });
-
-      await Promise.all(promises);
+      }
     }
   }
 
@@ -142,13 +139,14 @@ export class Pipeline {
     if (this.config.cache && this.config.cache.maxEntries !== 0) { // Only check cache if caching is not disabled
       const cachedResult = this.getCached(text);
       if (cachedResult) {
+        const clonedCachedResult = this.cloneContext(cachedResult);
         // Return cached result if available
-        await this.emit(PipelineEvent.RunStart, { context: cachedResult });
+        await this.emit(PipelineEvent.RunStart, { context: clonedCachedResult });
         await this.emit(PipelineEvent.RunEnd, {
-          context: cachedResult,
+          context: clonedCachedResult,
           duration: 0
         });
-        return cachedResult;
+        return clonedCachedResult;
       }
     }
 
@@ -159,33 +157,19 @@ export class Pipeline {
 
     const startTime = Date.now();
 
-    // Create initial context with empty data
-    const initialContext: QirrelContext = {
-      meta: {
-        requestId: 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-        timestamp: Date.now(),
-        source: 'cli'
-      },
-      memory: {
-        cache: {}
-      },
-      llm: {
-        model: this.config.llm?.model || 'gemini-2.5-flash',
-        safety: {
-          allowTools: true
-        }
-      }
-    };
-
     // Tokenize and add to context
     const tokens = this.tokenizer.tokenize(text);
-    let contextWithText: QirrelContext = {
-      ...initialContext,
-      data: {
+    let contextWithText: QirrelContext = createQirrelContext(
+      {
         text,
         tokens,
         entities: []
-      }
+      },
+      this.config.llm?.model || 'gemini-2.5-flash',
+    );
+    contextWithText.meta = {
+      ...contextWithText.meta,
+      source: 'cli',
     };
 
     // Emit run start event
@@ -282,7 +266,8 @@ export class Pipeline {
    */
   public getCached(text: string): QirrelContext | undefined {
     const cacheKey = this.generateCacheKey(text);
-    return this.cacheManager.get<QirrelContext>(cacheKey);
+    const cached = this.cacheManager.get<QirrelContext>(cacheKey);
+    return cached ? this.cloneContext(cached) : undefined;
   }
 
   /**
@@ -290,7 +275,48 @@ export class Pipeline {
    */
   public setCached(text: string, result: QirrelContext, ttl?: number): void {
     const cacheKey = this.generateCacheKey(text);
-    this.cacheManager.set(cacheKey, result, ttl);
+    this.cacheManager.set(cacheKey, this.cloneContext(result), ttl);
+  }
+
+  public async processBatch(
+    texts: string[],
+    options: { concurrency?: number } = {},
+  ): Promise<QirrelContext[]> {
+    if (!Array.isArray(texts)) {
+      throw new TypeError("processBatch expects an array of text inputs");
+    }
+
+    if (texts.length === 0) {
+      return [];
+    }
+
+    if (texts.some((text) => typeof text !== "string")) {
+      throw new TypeError("processBatch expects all inputs to be strings");
+    }
+
+    const concurrency = options.concurrency ?? Math.min(4, texts.length);
+    if (!Number.isInteger(concurrency) || concurrency <= 0) {
+      throw new RangeError("processBatch concurrency must be a positive integer");
+    }
+
+    const results: QirrelContext[] = new Array(texts.length);
+    let cursor = 0;
+
+    const worker = async (): Promise<void> => {
+      while (true) {
+        const index = cursor++;
+        if (index >= texts.length) {
+          return;
+        }
+        results[index] = await this.process(texts[index]!);
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(concurrency, texts.length) }, () => worker()),
+    );
+
+    return results;
   }
 
   /**
@@ -319,5 +345,12 @@ export class Pipeline {
       hash |= 0; // Convert to 32bit integer
     }
     return `pipeline_result_${Math.abs(hash).toString(36)}`;
+  }
+
+  private cloneContext(context: QirrelContext): QirrelContext {
+    if (typeof structuredClone === "function") {
+      return structuredClone(context);
+    }
+    return JSON.parse(JSON.stringify(context)) as QirrelContext;
   }
 }

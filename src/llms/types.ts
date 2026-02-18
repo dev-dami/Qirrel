@@ -7,6 +7,7 @@ export interface LLMConfig {
   temperature?: number | undefined;
   maxTokens?: number | undefined;
   timeout?: number | undefined;
+  cacheTtl?: number | undefined;
 }
 
 export interface LLMResponse {

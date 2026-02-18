@@ -12,6 +12,7 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   protected config: LLMConfig;
   protected cache?: LLMCache;
   protected fallbackHandler: FallbackHandler;
+  protected readonly defaultCacheTtl: number;
 
   constructor(
     config: LLMConfig,
@@ -24,11 +25,12 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
       maxTokens: config.maxTokens ?? 1024,
       timeout: config.timeout ?? 30000,
     };
+    this.defaultCacheTtl = config.cacheTtl ?? 300000;
 
     if (enableCache) {
       this.cache = new LLMCache({
         maxEntries: config.maxTokens ? Math.floor(config.maxTokens / 10) : 100,
-        ttl: 300000,
+        ttl: this.defaultCacheTtl,
       });
     }
 
@@ -94,6 +96,7 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
   protected async generateWithCache(
     prompt: string,
     options?: Partial<LLMConfig>,
+    generator?: (config: LLMConfig) => Promise<LLMResponse>,
   ): Promise<LLMResponse> {
     const config = this.mergeConfig(options);
     const cacheKey = this.getCacheKey(prompt, config);
@@ -106,10 +109,13 @@ export abstract class BaseLLMAdapter implements LLMAdapter {
     }
 
     try {
-      const response = await this.generate(prompt, options);
+      const response = generator
+        ? await generator(config)
+        : await this.generate(prompt, options);
 
       if (this.cache) {
-        const ttl = options?.timeout || 300000;
+        const ttl =
+          options?.cacheTtl ?? config.cacheTtl ?? this.defaultCacheTtl;
         this.cache.set(cacheKey, response, ttl);
       }
 

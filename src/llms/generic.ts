@@ -1,4 +1,3 @@
-import type { QirrelContext } from "../types";
 import { BaseLLMAdapter } from "./base";
 import type { LLMConfig, LLMResponse } from "./types";
 import https from "https";
@@ -22,8 +21,9 @@ export class GenericLLMAdapter extends BaseLLMAdapter {
   }
 
   public async generate(prompt: string, options?: Partial<LLMConfig>): Promise<LLMResponse> {
-    // Use the caching mechanism provided by the base class
-    return this.generateWithCache(prompt, options);
+    return this.generateWithCache(prompt, options, (config) =>
+      this.makeAPICall(prompt, config),
+    );
   }
 
   // Internal method to make the actual API call

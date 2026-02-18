@@ -1,4 +1,3 @@
-import type { QirrelContext } from "../types";
 import { BaseLLMAdapter } from "./base";
 import type { LLMConfig, LLMResponse } from "./types";
 
@@ -19,7 +18,9 @@ export class GeminiLLMAdapter extends BaseLLMAdapter {
     prompt: string,
     options?: Partial<LLMConfig>,
   ): Promise<LLMResponse> {
-    return this.generateWithCache(prompt, options);
+    return this.generateWithCache(prompt, options, (config) =>
+      this.makeAPICall(prompt, config),
+    );
   }
 
   private async makeAPICall(

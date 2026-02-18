@@ -1,6 +1,6 @@
 import type { Token } from "../core/Tokenizer";
 import type { LLMResponse } from '../llms/types';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export interface Entity {
   type: string;
@@ -56,7 +56,7 @@ export function createQirrelContext(
 ): QirrelContext {
   return {
     meta: {
-      requestId: uuidv4(),
+      requestId: createRequestId(),
       timestamp: Date.now(),
     },
     memory: {
@@ -74,4 +74,11 @@ export function createQirrelContext(
       entities: []
     }
   };
+}
+
+function createRequestId(): string {
+  if (typeof randomUUID === 'function') {
+    return randomUUID();
+  }
+  return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }

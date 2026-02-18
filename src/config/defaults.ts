@@ -36,6 +36,7 @@ export interface MiniparseConfig {
     temperature?: number;
     maxTokens?: number;
     timeout?: number;
+    cacheTtl?: number;
   };
 }
 
@@ -69,5 +70,6 @@ export const defaultConfig: MiniparseConfig = {
   llm: {
     enabled: false,
     provider: "gemini",
+    cacheTtl: 300000,
   },
 };

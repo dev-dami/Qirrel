@@ -1,173 +1,100 @@
-# Code Walkthrough
+# Architecture Walkthrough
 
-This document provides insights into Qirrel's architecture and implementation, helping you understand how the library works internally and how to best utilize its features.
+This document explains how Qirrel processes input text from start to finish.
 
-## Architecture Overview
+## End-to-End Flow
 
-Qirrel follows a modular pipeline architecture that allows for flexible text processing workflows. The core components work together to provide comprehensive text analysis capabilities:
-
-```
-Input Text → Tokenizer → Pipeline Components → Output (QirrelContext)
-```
-
-### Core Components
-
-#### 1. Tokenizer (src/core/Tokenizer.ts)
-The Tokenizer is responsible for breaking down input text into meaningful units called tokens. Each token contains information about its type, value, and position in the original text.
-
-- **Purpose**: Splits text into discrete elements like words, numbers, punctuation, and symbols
-- **Key Feature**: Optimized classification algorithm that efficiently categorizes Unicode characters
-- **Customizable**: Options for lowercasing and symbol merging
-
-```ts
-// Internal classification algorithm example
-private classifyOptimized(code: number, ch: string): TokenType {
-  if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) { // A-Z, a-z
-    return "word";
-  }
-  // ... other classifications
-}
+```text
+Input text
+  -> Tokenizer
+  -> Pipeline components (normalize/clean/extract/segment)
+  -> QirrelContext output
+  -> optional cache reuse on future calls
 ```
 
-#### 2. Pipeline (src/core/pipeline.ts)
-The Pipeline orchestrates the text processing workflow by managing a chain of processing components.
+## Key Runtime Object: `QirrelContext`
 
-- **Purpose**: Coordinates the execution of various text processors
-- **Key Feature**: Configurable processing steps that can be enabled/disabled
-- **Flexibility**: Allows custom processors to be added dynamically
+All processors read/write the same context object:
 
-```ts
-// Pipeline construction based on configuration
-constructor(configPath?: string) {
-  // Load configuration
-  this.config = ConfigLoader.loadConfig(configPath);
+- `meta`: request metadata (`requestId`, `timestamp`, source)
+- `memory`: per-request memory namespace
+- `llm`: model/safety metadata
+- `data.text`: current text payload
+- `data.tokens`: tokenizer output
+- `data.entities`: extracted entities
 
-  // Conditionally add processors based on config
-  if (this.config.pipeline.enableNormalization) this.use(normalize);
-  if (this.config.pipeline.enableCleaning) this.use(clean);
-  // ... more conditional additions
-}
-```
+## Pipeline Construction
 
-#### 3. Processors (src/processors/)
-Processors are individual units of functionality that transform the text processing result. They follow a functional programming approach, accepting and returning `QirrelContext` objects.
+`Pipeline` builds a default chain from config in `src/config/loader.ts` + `src/config/defaults.ts`.
 
-- **Design Pattern**: Stateless functions that implement the `PipelineComponent` type
-- **Modularity**: Each processor handles a specific aspect of text analysis
-- **Chaining**: Processors can be combined in any order to create custom workflows
+Typical enabled order:
 
-## Configuration System
+1. `normalize`
+2. `clean`
+3. `advClean` (optional)
+4. extraction processors (email/phone/url/number by flags)
+5. `segment`
 
-### Config Loading (src/config/)
-Qirrel uses a hierarchical configuration system that starts with defaults and can be overridden by user-specified YAML files.
+Each component can be wrapped with cache logic when caching is enabled.
 
-- **Default Configuration**: Sensible presets for common use cases
-- **YAML Override**: Allows users to customize behavior without code changes
-- **Runtime Flexibility**: Config can be accessed programmatically
+## Processing Lifecycle
 
-The configuration system controls:
-- Pipeline stage activation
-- Tokenizer behavior
-- Entity extraction options
-- Speech analysis features
-- LLM integration settings
+`Pipeline.process(text)` does this:
 
-## Entity Extraction System
+1. checks result cache
+2. initializes context + tokenizes input
+3. emits `RunStart`
+4. executes each component
+5. emits `ProcessorStart` / `ProcessorEnd` around each component
+6. stores result in cache
+7. emits `RunEnd`
 
-The extraction module (src/processors/extract.ts) implements robust entity detection using a combination of regex patterns and validation libraries:
+If a component throws, pipeline emits `Error` and rethrows.
 
-- **Email Extraction**: Uses pattern matching combined with `validator.isEmail()` for accuracy
-- **Phone Numbers**: Leverages `libphonenumber-js` for international phone validation
-- **URL Detection**: Combines regex discovery with `validator.isURL()` verification
-- **Number Recognition**: Handles integers, floats, and scientific notation
+## Phone Extraction Hardening
 
-## LLM Integration Architecture
+Phone extraction uses `libphonenumber-js` scanning plus region fallbacks to improve support for:
 
-For advanced processing capabilities, Qirrel supports integration with Large Language Models through an adapter pattern:
+- international formats (`+44`, `+234`, `+49`, etc.)
+- extension forms (`ext. 42`)
+- local patterns (with default-region matching)
 
-- **Adapter Pattern**: Abstracts different LLM providers behind a common interface
-- **Async Initialization**: LLM adapters are initialized asynchronously to avoid blocking
-- **Fallback Mechanisms**: Graceful degradation when LLM services are unavailable
+The extractor deduplicates overlapping matches and rejects short numeric false positives.
 
-## Type System
+## LLM Integration
 
-Qirrel employs a strong type system for reliable text processing:
+When `llm.enabled` and API key are set, `Pipeline` initializes an adapter via `LLMAdapterFactory`.
 
-- **QirrelContext Interface**: Canonical context for all processing operations
-- **Token Interface**: Detailed information about each text element
-- **Entity Interface**: Structured representation of extracted information
-- **Type Safety**: Comprehensive TypeScript definitions throughout
+Supported adapter paths:
 
-## Error Handling Strategy
+- `gemini`
+- `openai`
+- `generic` (OpenAI-compatible style endpoint)
 
-The library implements defensive programming practices:
+LLM adapters expose `generate()` and `generateWithContext()`.
 
-- **Try-Catch Wrapping**: Individual processor steps are wrapped to prevent cascading failures
-- **Warning Messages**: Non-critical failures are logged as warnings rather than thrown errors
-- **Graceful Degradation**: Missing features or misconfigurations don't halt processing
+## Caching Model
 
-## Performance Considerations
+Qirrel uses LRU cache with TTL:
 
-Several optimizations ensure efficient text processing:
+- pipeline result cache
+- component-level cache wrappers
+- adapter-level LLM response cache
 
-1. **Single-Pass Algorithms**: Where possible, algorithms process text in a single iteration
-2. **Optimized Character Classification**: Direct Unicode code comparisons instead of complex regex
-3. **Conditional Processing**: Disabled features don't consume resources
-4. **Memory Efficiency**: Objects are reused rather than constantly recreated
+Cached contexts are cloned on get/set to avoid mutation leakage across calls.
 
-## Extensibility Points
+## Extension Points
 
-Qirrel is designed to be extended through:
+- add custom components via `addCustomProcessor()`
+- add LLM-aware components via `addLLMProcessor()`
+- subscribe to lifecycle telemetry via `on()`/`off()`
+- process in parallel with `processBatch(texts, { concurrency })`
 
-1. **Custom Processors**: Users can implement their own `PipelineComponent` functions
-2. **Configuration Options**: YAML configuration allows behavior adjustments
-3. **Pipeline Modification**: Runtime addition of processors via `addCustomProcessor()`
-4. **LLM Adapters**: New providers can be added by implementing the LLM adapter interface
+## Source Map
 
-## Caching Architecture
-
-Qirrel includes a sophisticated caching system to improve performance:
-
-### Cache Management (src/utils/cache/)
-The caching system is organized in a dedicated utilities folder:
-
-- **Cache Implementation**: Uses the `lru-cache` library for production-grade caching
-- **Multiple Cache Types**: Different cache managers for different use cases (LLM responses, contexts, etc.)
-- **Configurable**: Cache behavior can be controlled via configuration files
-- **Automatic**: Pipeline-level caching happens automatically based on configuration
-
-### Cache Structure
-```
-src/utils/cache/
-├── cache.ts          # Core cache implementation
-├── CacheManager.ts   # High-level cache managers
-├── cached-components.ts # Component caching utilities
-├── types.ts          # Cache-related type definitions
-└── index.ts          # Export index
-```
-
-The cache system provides:
-- LRU (Least Recently Used) eviction policy
-- TTL (Time To Live) with automatic expiration
-- Pipeline-level result caching
-- Component-level operation caching
-- Configurable maximum entry limits
-
-## File Organization
-
-The project structure follows a logical separation of concerns:
-
-```
-src/
-├── core/           # Fundamental components (Pipeline, Tokenizer)
-├── processors/     # Individual text processing functions
-├── types/          # TypeScript type definitions
-├── config/         # Configuration loading and defaults
-├── llms/           # LLM integration components
-├── adapters/       # Various adapter implementations
-├── api/            # Public API entry points
-└── utils/          # Utility functions and cache system
-    └── cache/      # Caching implementation
-```
-
-This architecture enables maintainable, testable, and extensible code while providing a clean public API for consumers.
+- `src/core/pipeline.ts`: orchestration/events/batch/caching
+- `src/core/Tokenizer.ts`: tokenization
+- `src/processors/*`: built-in processors
+- `src/config/*`: config defaults + loader
+- `src/llms/*`: adapter abstractions/providers
+- `src/utils/cache/*`: cache implementation

@@ -109,4 +109,16 @@ describe('Pipeline Events', () => {
     expect(processorStartPayload.processorName).toBeDefined();
     expect(processorStartPayload.context).toBeDefined();
   });
+
+  test('should continue processing when one event handler throws', async () => {
+    const successfulHandler = jest.fn();
+
+    pipeline.on(PipelineEvent.RunStart, () => {
+      throw new Error('observer failure');
+    });
+    pipeline.on(PipelineEvent.RunStart, successfulHandler);
+
+    await expect(pipeline.process("Hello resilient pipeline!")).resolves.toBeDefined();
+    expect(successfulHandler).toHaveBeenCalledTimes(1);
+  });
 });

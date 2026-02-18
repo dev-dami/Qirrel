@@ -1,192 +1,66 @@
 # Basic Usage
 
-This guide covers the fundamentals of using Qirrel for text processing. If you're new to the library, start here to understand the core concepts.
-
-## Getting Started
-
-### Installation
-
-First, install Qirrel in your project:
+## Install
 
 ```bash
-npm install qirrel
+bun add qirrel
 ```
 
-If you plan to use LLM features, you'll also need the provider-specific package:
-
-```bash
-npm install qirrel @google/generative-ai  # for Google Gemini
-```
-
-### Simple Text Processing
-
-The easiest way to start using Qirrel is with the `processText` function:
+## Process a Single Text
 
 ```ts
 import { processText } from 'qirrel';
 
-async function example() {
-  const result = await processText('Contact me at email@example.com');
-  console.log(result);
-}
+const result = await processText('Email me at hello@example.com');
+console.log(result.data?.entities);
 ```
 
-This will return an `QirrelContext` object containing:
-- The canonical context with namespaces (meta, memory, llm)
-- The original text in the data field
-- An array of tokens in the data field
-- An array of extracted entities in the data field
-
-### Understanding the Output
+## Process Multiple Texts
 
 ```ts
-{
-  meta: {
-    requestId: "req_1a2b3c4d5e",
-    timestamp: 1234567890,
-    source: "cli"
-  },
-  memory: {
-    cache: {}
-  },
-  llm: {
-    model: "gemini-2.5-flash",
-    safety: {
-      allowTools: true
-    }
-  },
-  data: {
-    text: "Contact me at email@example.com",
-    tokens: [
-      { value: "contact", type: "word", start: 0, end: 7 },
-      { value: "me", type: "word", start: 8, end: 10 },
-      // ... more tokens
-    ],
-    entities: [
-      {
-        type: "email",
-        value: "email@example.com",
-        start: 14,
-        end: 31
-      }
-    ]
-  }
+import { processTexts } from 'qirrel';
+
+const results = await processTexts([
+  'Contact: +1 415 555 2671',
+  'Site: https://example.com',
+]);
+
+for (const item of results) {
+  console.log(item.data?.entities);
 }
 ```
 
-## Core Concepts
-
-### The Pipeline Pattern
-
-Qirrel uses a pipeline approach where text flows through multiple processing stages:
+## Use the `Pipeline` Directly
 
 ```ts
 import { Pipeline } from 'qirrel';
 
 const pipeline = new Pipeline();
-// Default pipeline includes tokenization, cleaning, extraction, etc.
+const output = await pipeline.process('Price is 29.99 and url is https://example.com');
+
+console.log(output.data?.tokens);
+console.log(output.data?.entities);
 ```
 
-The default pipeline automatically:
-1. Tokenizes the input text
-2. Normalizes the text (converts abbreviations)
-3. Cleans punctuation (configurable)
-4. Extracts entities (emails, phones, etc.)
-
-### Entities
-
-Qirrel can automatically identify and extract various types of entities:
-
-- **Emails**: Valid email addresses
-- **Phones**: International phone number formats
-- **URLs**: HTTP/HTTPS web addresses
-- **Numbers**: Integers, decimals, scientific notation
+## Access Cached Results
 
 ```ts
-const result = await processText('Call 1-800-FLOWERS or visit https://flowers.com');
-// result.entities would contain both phone and URL entities
-```
+import { Pipeline } from 'qirrel';
 
-### Configuration
+const pipeline = new Pipeline();
+await pipeline.process('cached text');
 
-For basic usage, the default configuration works well. But you can provide a custom YAML configuration file:
-
-```ts
-const pipeline = new Pipeline('./my-config.yaml');
-```
-
-## Common Basic Patterns
-
-### Extracting Specific Information
-
-If you're interested in specific entity types, you can use targeted processors:
-
-```ts
-import { extractEmailsOnly, extractPhonesOnly } from 'qirrel';
-
-// Process text to get only emails
-const emailResult = extractEmailsOnly({
-  text: 'Contact: email@test.com or call (555) 123-4567',
-  tokens: [],
-  entities: []
-});
-// Only emails will be in emailResult.entities
-```
-
-### Token Analysis
-
-You can work directly with tokens to understand the text structure:
-
-```ts
-const result = await processText('The price is $19.99');
-const words = result.tokens.filter(token => token.type === 'word');
-const numbers = result.tokens.filter(token => token.type === 'number');
-```
-
-## Customizing Behavior
-
-### Using Different Pipeline Options
-
-You can configure the pipeline at initialization:
-
-```ts
-// Create a pipeline with custom behavior
-const pipeline = new Pipeline('./custom-config.yaml');
-const result = await pipeline.process('Some text here');
-```
-
-### Configuration File Example
-
-Create a `config.yaml` file:
-
-```yaml
-pipeline:
-  enableNormalization: true
-  enableCleaning: true
-  enableExtraction: true
-  enableSegmentation: false  # Disable segmentation
-
-extraction:
-  extractEmails: true
-  extractPhones: false      # Don't extract phone numbers
-  extractUrls: true
-  extractNumbers: true
-```
-
-## Error Handling
-
-The basic Qirrel functions are designed to be robust:
-
-```ts
-try {
-  const result = await processText(userInput);
-  // Handle normal case
-} catch (error) {
-  // This rarely happens, as Qirrel handles errors gracefully
-  console.error('Unexpected error processing text:', error);
+if (pipeline.isCached('cached text')) {
+  const cached = pipeline.getCached('cached text');
+  console.log(cached?.data?.entities);
 }
 ```
 
-Remember that Qirrel processes text defensively and will return results even if some components fail, so basic error handling isn't typically needed for standard use cases.
+## Output Shape
 
-Now that you understand basic usage, you can move on to more advanced techniques for customizing Qirrel's behavior to meet specific requirements.
+Use `result.data?.entities`, not `result.entities`.
+
+```ts
+const result = await processText('Call +44 20 7946 0958');
+const entities = result.data?.entities ?? [];
+```

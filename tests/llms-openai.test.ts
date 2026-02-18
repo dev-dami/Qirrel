@@ -426,6 +426,13 @@ describe('OpenAILLMAdapter', () => {
       const body = JSON.parse(callArgs[1].body);
       expect(body.messages[0].content).toContain('quotes');
     });
+
+    it('should use cache for repeated identical prompts when enabled', async () => {
+      await adapter.generate('cache me');
+      await adapter.generate('cache me');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('timeout handling', () => {

@@ -1,7 +1,7 @@
 import type { PipelineComponent } from "../core/types";
 import { QirrelContext, Entity } from "../types";
 import validator from "validator";
-import { parsePhoneNumber } from 'libphonenumber-js';
+import { findPhoneNumbersInText, type CountryCode } from "libphonenumber-js";
 
 export const extract: PipelineComponent = {
   name: "extract",
@@ -132,66 +132,87 @@ function extractEmails(inputData: { text: string; entities: Entity[] }): void {
 
 function extractPhones(inputData: { text: string; entities: Entity[] }): void {
   const text = inputData.text;
+  const fallbackCountries: CountryCode[] = [
+    "US",
+    "GB",
+    "DE",
+    "FR",
+    "ES",
+    "IT",
+    "AU",
+    "NG",
+    "CA",
+  ];
 
-  // More comprehensive regex to capture various phone formats
-  const phoneRegex = /(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})|(\+?[1-9]\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9})/g;
-  let match;
+  const candidates = new Map<string, { value: string; start: number; end: number }>();
 
-  // Extract all potential phone numbers
-  const potentialPhones = [];
-  while ((match = phoneRegex.exec(text)) !== null) {
-    // Get the full matched string
-    const fullMatch = match[0];
-    potentialPhones.push({
-      number: fullMatch,
-      start: match.index,
-      end: match.index + fullMatch.length
-    });
-  }
-
-  // Validate each potential phone number using libphonenumber-js
-  for (const potential of potentialPhones) {
-    try {
-      // Try parsing with different country codes as fallback
-      let isValid = false;
-      const possibleCountries = ['US', 'GB', 'DE', 'FR', 'ES', 'IT', 'AU'] as const;
-
-      for (const country of possibleCountries) {
-        try {
-          const phoneNumber = parsePhoneNumber(potential.number, country);
-          if (phoneNumber.isValid()) {
-            isValid = true;
-            break;
-          }
-        } catch (e) {
-          // Try next country
-          continue;
-        }
+  const collectMatches = (
+    found: ReturnType<typeof findPhoneNumbersInText>,
+  ): void => {
+    for (const entry of found) {
+      if (!entry.number.isValid()) {
+        continue;
       }
 
-      // If still not valid, try without specifying a country
-      if (!isValid) {
-        try {
-          const phoneNumber = parsePhoneNumber(potential.number, { extract: false });
-          if (phoneNumber.isValid()) {
-            isValid = true;
-          }
-        } catch (e) {
-          // Ignore - will remain invalid
-        }
+      const rawValue = text.slice(entry.startsAt, entry.endsAt);
+      const digitCount = rawValue.replace(/\D/g, "").length;
+      // Prevent short reference numbers from being mislabeled as phone numbers.
+      if (!rawValue.includes("+") && digitCount < 10) {
+        continue;
       }
 
-      if (isValid) {
-        inputData.entities.push({
-          type: "phone",
-          value: potential.number,
-          start: potential.start,
-          end: potential.end,
+      const key = `${entry.startsAt}:${entry.endsAt}`;
+      const existing = candidates.get(key);
+      if (!existing || rawValue.length > existing.value.length) {
+        candidates.set(key, {
+          value: rawValue,
+          start: entry.startsAt,
+          end: entry.endsAt,
         });
       }
-    } catch (e) {
-      // If parsing fails, skip this number
-      continue;
+    }
+  };
+
+  collectMatches(findPhoneNumbersInText(text));
+  for (const country of fallbackCountries) {
+    collectMatches(findPhoneNumbersInText(text, { defaultCountry: country }));
+  }
+
+  const nonOverlapping = Array.from(candidates.values())
+    .sort(
+      (a, b) =>
+        b.end - b.start - (a.end - a.start) || a.start - b.start,
+    )
+    .reduce<Array<{ value: string; start: number; end: number }>>(
+      (accepted, candidate) => {
+        const overlaps = accepted.some(
+          (existing) =>
+            candidate.start < existing.end && candidate.end > existing.start,
+        );
+        if (!overlaps) {
+          accepted.push(candidate);
+        }
+        return accepted;
+      },
+      [],
+    )
+    .sort((a, b) => a.start - b.start);
+
+  for (const phone of nonOverlapping) {
+    const alreadyPresent = inputData.entities.some(
+      (entity) =>
+        entity.type === "phone" &&
+        entity.start === phone.start &&
+        entity.end === phone.end &&
+        entity.value === phone.value,
+    );
+    if (!alreadyPresent) {
+      inputData.entities.push({
+        type: "phone",
+        value: phone.value,
+        start: phone.start,
+        end: phone.end,
+      });
     }
   }
 }

@@ -35,14 +35,14 @@ export function createCachedComponent(
       // Try to get cached result
       const cachedResult = cacheManager.get<QirrelContext>(cacheKey);
       if (cachedResult) {
-        return cachedResult;
+        return cloneContext(cachedResult);
       }
 
       // Run the original component
       const result = await component.run(ctx);
 
       // Cache the result
-      cacheManager.set(cacheKey, result);
+      cacheManager.set(cacheKey, cloneContext(result));
 
       return result;
     }
@@ -74,4 +74,11 @@ function generateContextHash(data: string): string {
     hash |= 0; // Convert to 32bit integer
   }
   return Math.abs(hash).toString(36);
+}
+
+function cloneContext(context: QirrelContext): QirrelContext {
+  if (typeof structuredClone === "function") {
+    return structuredClone(context);
+  }
+  return JSON.parse(JSON.stringify(context)) as QirrelContext;
 }
