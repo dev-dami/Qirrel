@@ -30,6 +30,9 @@ describe("mcp request handler", () => {
     expect(
       toolsResponse.result?.tools.some((tool: { name: string }) => tool.name === "qirrel.parse_text"),
     ).toBe(true);
+    expect(
+      toolsResponse.result?.tools.some((tool: { name: string }) => tool.name === "qirrel.tool_help"),
+    ).toBe(true);
   });
 
   test("supports tools/call and returns MCP tool payload", async () => {
@@ -51,5 +54,29 @@ describe("mcp request handler", () => {
     expect(response.id).toBe(3);
     expect(Array.isArray(response.result?.content)).toBe(true);
     expect(response.result?.structuredContent).toHaveProperty("data");
+  });
+
+  test("tool_help is callable through MCP and returns explainable metadata", async () => {
+    const bridge = createQirrelAgentBridge();
+    const handle = createMcpRequestHandler(bridge);
+
+    const response = await handle({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "tools/call",
+      params: {
+        name: "qirrel.tool_help",
+        arguments: {
+          name: "qirrel.parse_batch",
+        },
+      },
+    });
+
+    expect(response.id).toBe(4);
+    expect(response.result?.structuredContent).toMatchObject({
+      tool: expect.objectContaining({
+        name: "qirrel.parse_batch",
+      }),
+    });
   });
 });

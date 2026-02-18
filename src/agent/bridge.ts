@@ -51,6 +51,10 @@ export class AgentBridge {
     return [...this.tools.values()].map((tool) => tool.definition);
   }
 
+  public getToolDefinition(name: string): AgentToolDefinition | undefined {
+    return this.tools.get(name)?.definition;
+  }
+
   public async callTool(name: string, args: unknown): Promise<AgentToolResult> {
     const tool = this.tools.get(name);
     if (!tool) {

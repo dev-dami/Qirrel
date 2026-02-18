@@ -33,6 +33,7 @@ describe("agent native bridge", () => {
 
     expect(tools.some((tool) => tool.name === "qirrel.parse_text")).toBe(true);
     expect(tools.some((tool) => tool.name === "qirrel.parse_batch")).toBe(true);
+    expect(tools.some((tool) => tool.name === "qirrel.tool_help")).toBe(true);
 
     const parsed = await bridge.callTool("qirrel.parse_text", {
       text: "Email hello@example.com",
@@ -40,5 +41,24 @@ describe("agent native bridge", () => {
 
     expect(parsed.structuredContent).toHaveProperty("data");
     expect(parsed.structuredContent).toHaveProperty("meta");
+  });
+
+  test("tool_help explains tool usage for model-driven discovery", async () => {
+    const bridge = createQirrelAgentBridge();
+
+    const help = await bridge.callTool("qirrel.tool_help", {
+      name: "qirrel.parse_text",
+    });
+
+    expect(help.structuredContent).toMatchObject({
+      tool: expect.objectContaining({
+        name: "qirrel.parse_text",
+        description: expect.any(String),
+        inputSchema: expect.any(Object),
+      }),
+    });
+
+    expect(help.content[0]?.text).toContain("qirrel.parse_text");
+    expect(help.content[0]?.text).toContain("Usage");
   });
 });

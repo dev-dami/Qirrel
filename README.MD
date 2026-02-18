@@ -127,6 +127,12 @@ Run benchmark:
 bun run bench:agent
 ```
 
+Framework comparison benchmark:
+
+```bash
+bun run bench:frameworks
+```
+
 ## Documentation
 
 - [Docs Home](./docs/README.md)
@@ -139,6 +145,8 @@ bun run bench:agent
 - [LLM Integration](./docs/integrations/llm.md)
 - [Architecture Walkthrough](./docs/walkthrough.md)
 - [Agent-Native Integration](./docs/agent-native.md)
+- [Benchmarks](./docs/benchmarks.md)
+- [Agent Feature Roadmap](./docs/agent-roadmap.md)
 
 ## Contributing
 

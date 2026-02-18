@@ -11,6 +11,8 @@ const topicDocs = [
   "events.md",
   "walkthrough.md",
   "agent-native.md",
+  "agent-roadmap.md",
+  "benchmarks.md",
   "usage/basic.md",
   "usage/caching.md",
   "integrations/llm.md",

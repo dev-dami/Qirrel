@@ -1,7 +1,24 @@
+export interface AgentToolAnnotations {
+  title?: string;
+  readOnlyHint?: boolean;
+  destructiveHint?: boolean;
+  idempotentHint?: boolean;
+  openWorldHint?: boolean;
+}
+
+export interface AgentToolExample {
+  title?: string;
+  arguments: Record<string, unknown>;
+}
+
 export interface AgentToolDefinition {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+  annotations?: AgentToolAnnotations;
+  examples?: AgentToolExample[];
+  tags?: string[];
 }
 
 export interface AgentToolContent {

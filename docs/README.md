@@ -14,9 +14,11 @@ GitHub-first Markdown docs for Qirrel.
 - [LLM Integration](./integrations/llm.md)
 - [Architecture Walkthrough](./walkthrough.md)
 - [Agent-Native Integration](./agent-native.md)
+- [Benchmarks](./benchmarks.md)
+- [Agent Feature Roadmap](./agent-roadmap.md)
 
 ## Quick Navigation
 
 - Core: [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md)
 - Usage: [Basic](./usage/basic.md) | [Caching](./usage/caching.md)
-- Advanced: [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md)
+- Advanced: [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md) | [Benchmarks](./benchmarks.md) | [Roadmap](./agent-roadmap.md)
