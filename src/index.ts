@@ -5,6 +5,7 @@ export { LruCacheManager, LLMCacheManager, ContextCacheManager } from "./utils/c
 export * from "./processors";
 export * from "./adapters";
 export * from "./llms";
+export * from "./agent";
 export type { Entity, QirrelContext } from "./types";
 export type { MiniparseConfig } from "./config/defaults";
 export { ConfigLoader } from "./config/loader";

@@ -1,6 +1,6 @@
 # Basic Usage
 
-[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Caching](./caching.md) | [Events](../events.md) | [LLM](../integrations/llm.md) | [Architecture](../walkthrough.md)
+[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Caching](./caching.md) | [Events](../events.md) | [LLM](../integrations/llm.md) | [Architecture](../walkthrough.md) | [Agent-Native](../agent-native.md)
 
 ## Install
 

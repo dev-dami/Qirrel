@@ -10,6 +10,7 @@ const topicDocs = [
   "examples.md",
   "events.md",
   "walkthrough.md",
+  "agent-native.md",
   "usage/basic.md",
   "usage/caching.md",
   "integrations/llm.md",

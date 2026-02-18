@@ -1,6 +1,6 @@
 # LLM Integration
 
-[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Basic](../usage/basic.md) | [Caching](../usage/caching.md) | [Events](../events.md) | [Architecture](../walkthrough.md)
+[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Basic](../usage/basic.md) | [Caching](../usage/caching.md) | [Events](../events.md) | [Architecture](../walkthrough.md) | [Agent-Native](../agent-native.md)
 
 Qirrel supports pluggable LLM adapters (`gemini`, `openai`, and generic OpenAI-compatible endpoints).
 

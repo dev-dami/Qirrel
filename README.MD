@@ -103,6 +103,30 @@ This repository includes GitHub Actions workflows:
 - `ci.yml`: runs install, build, tests, and coverage on push/PR.
 - `release.yml`: runs release checks and can publish to npm on version tags (`v*`) when `NPM_TOKEN` is configured.
 
+## Agent-Native Mode
+
+Qirrel ships with an agent-native bridge plus an MCP server so the same parsing core works for API code and agent toolchains.
+
+```ts
+import { createQirrelAgentBridge } from "qirrel";
+
+const bridge = createQirrelAgentBridge();
+const result = await bridge.callTool("qirrel.parse_text", { text: "Email me@example.com" });
+console.log(result.structuredContent);
+```
+
+Run MCP server:
+
+```bash
+bun run mcp:start
+```
+
+Run benchmark:
+
+```bash
+bun run bench:agent
+```
+
 ## Documentation
 
 - [Docs Home](./docs/README.md)
@@ -114,6 +138,7 @@ This repository includes GitHub Actions workflows:
 - [Pipeline Events](./docs/events.md)
 - [LLM Integration](./docs/integrations/llm.md)
 - [Architecture Walkthrough](./docs/walkthrough.md)
+- [Agent-Native Integration](./docs/agent-native.md)
 
 ## Contributing
 
