@@ -2,16 +2,28 @@
 
 <div align="center">
 
+**TypeScript NLP pipeline for fast, structured text understanding**
+
+[![CI](https://github.com/dev-dami/Qirrel/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-dami/Qirrel/actions/workflows/ci.yml)
+[![CD](https://github.com/dev-dami/Qirrel/actions/workflows/release.yml/badge.svg)](https://github.com/dev-dami/Qirrel/actions/workflows/release.yml)
 [![NPM Version](https://img.shields.io/npm/v/qirrel.svg)](https://www.npmjs.com/package/qirrel)
 [![NPM Downloads](https://img.shields.io/npm/dm/qirrel.svg)](https://www.npmjs.com/package/qirrel)
 [![License](https://img.shields.io/npm/l/qirrel.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
+[GitHub](https://github.com/dev-dami/Qirrel) · [NPM](https://www.npmjs.com/package/qirrel) · Author: [Damilare Osibanjo](https://github.com/dev-dami)
+
 </div>
 
-Qirrel is a TypeScript NLP library for tokenization, rule-based entity extraction, optional LLM enrichment, and pipeline orchestration.
+## Why Qirrel
 
-[GitHub](https://github.com/dev-dami/qirrel) | [NPM](https://www.npmjs.com/package/qirrel) | Author: [Damilare Osibanjo](https://github.com/dev-dami)
+Qirrel gives you a production-ready pipeline for extracting structure from raw text:
+
+- Tokenization with positional metadata.
+- Rule-based extraction for email, phone, URL, and number entities.
+- Optional LLM enrichment via adapter pattern.
+- Built-in caching and lifecycle events.
+- Batch processing with controllable concurrency.
 
 ## Install
 
@@ -19,27 +31,45 @@ Qirrel is a TypeScript NLP library for tokenization, rule-based entity extractio
 bun add qirrel
 ```
 
-## Quick Start
+## 30-Second Start
 
 ```ts
 import { processText } from 'qirrel';
 
-const result = await processText('Contact John at john@example.com or call +1 415 555 2671');
+const result = await processText(
+  'Contact Jane at jane@example.com or +44 20 7946 0958',
+);
+
 console.log(result.data?.entities);
 ```
 
-## Batch Processing
+## Core Features
+
+| Feature | API | Notes |
+| --- | --- | --- |
+| Single-text processing | `processText(text)` | Returns `QirrelContext` |
+| Batch processing | `processTexts(texts, configPath?, { concurrency })` | Keeps input order |
+| Custom pipeline | `new Pipeline(configPath?)` | Add processors and hooks |
+| Events | `pipeline.on(PipelineEvent.*, handler)` | Run/processor/error telemetry |
+| Caching | `pipeline.isCached/getCached/setCached` | LRU + TTL |
+| LLM adapter | `pipeline.getLLMAdapter()` | `gemini`, `openai`, `generic` |
+
+## Batch Example
 
 ```ts
-import { processTexts, Pipeline } from 'qirrel';
+import { processTexts } from 'qirrel';
 
-const results = await processTexts(['first input', 'second input'], undefined, { concurrency: 2 });
+const inputs = [
+  'US: +1 415 555 2671',
+  'URL: https://example.com',
+  'Email: team@example.com',
+];
 
-const pipeline = new Pipeline();
-const ordered = await pipeline.processBatch(['a', 'b', 'c'], { concurrency: 3 });
+const outputs = await processTexts(inputs, undefined, { concurrency: 2 });
+console.log(outputs.map((o) => o.data?.entities));
 ```
 
-## LLM Integration
+## LLM Example
 
 ```ts
 import { Pipeline } from 'qirrel';
@@ -47,37 +77,45 @@ import { Pipeline } from 'qirrel';
 const pipeline = new Pipeline('./config-with-llm.yaml');
 await pipeline.init();
 
-const llmAdapter = pipeline.getLLMAdapter();
-if (llmAdapter) {
-  const response = await llmAdapter.generate('Summarize this text: Hello world');
+const adapter = pipeline.getLLMAdapter();
+if (adapter) {
+  const response = await adapter.generate('Summarize: Qirrel is an NLP pipeline.');
   console.log(response.content);
 }
 ```
 
-## Caching
+## Minimal LLM Config
 
-```ts
-import { Pipeline } from 'qirrel';
-
-const pipeline = new Pipeline();
-
-if (pipeline.isCached('some text')) {
-  console.log(pipeline.getCached('some text'));
-} else {
-  const result = await pipeline.process('some text');
-  console.log(result.data?.entities);
-}
+```yaml
+llm:
+  enabled: true
+  provider: openai
+  apiKey: ${QIRREL_LLM_API_KEY}
+  model: gpt-4o-mini
+  timeout: 30000
+  cacheTtl: 300000
 ```
+
+## Quality Gates (CI/CD)
+
+This repository includes GitHub Actions workflows:
+
+- `ci.yml`: runs install, build, tests, and coverage on push/PR.
+- `release.yml`: runs release checks and can publish to npm on version tags (`v*`) when `NPM_TOKEN` is configured.
 
 ## Documentation
 
-- [API Reference](./docs/api.md)
-- [Configuration Guide](./docs/configuration.md)
-- [Usage Examples](./docs/examples.md)
-- [Basic Usage](./docs/usage/basic.md)
-- [LLM Integration](./docs/integrations/llm.md)
-- [Pipeline Events](./docs/events.md)
-- [Caching](./docs/usage/caching.md)
+- [Docs Home (Styled)](./docs/index.html)
+- [API Reference](./docs/pages/api.html)
+- [Configuration Guide](./docs/pages/configuration.html)
+- [Usage Examples](./docs/pages/examples.html)
+- [Basic Usage](./docs/pages/basic.html)
+- [Caching](./docs/pages/caching.html)
+- [Pipeline Events](./docs/pages/events.html)
+- [LLM Integration](./docs/pages/llm.html)
+- [Architecture Walkthrough](./docs/pages/walkthrough.html)
+
+Markdown source docs are still available under `./docs/`.
 
 ## Contributing
 

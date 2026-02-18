@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qirrel Docs • LLM Integration</title>
+    <link rel="stylesheet" href="../assets/docs.css" />
+  </head>
+  <body>
+    <main class="docs-shell">
+      <header class="docs-nav" data-motion><a class="brand" href="../index.html">Qirrel Docs</a><nav class="nav-links"><a class="nav-pill" href="../index.html">Back</a></nav></header>
+      <section class="hero" data-motion><h1>LLM Integration</h1><p>Adapter-driven LLM extensions with resilient config and caching controls.</p></section>
+      <section class="section" data-motion>
+        <h2>Providers</h2>
+        <ul class="list"><li><code>gemini</code></li><li><code>openai</code></li><li><code>generic</code></li></ul>
+        <h2 class="spacer-md">Config</h2>
+        <pre class="code">llm:
+  enabled: true
+  provider: openai
+  apiKey: ${QIRREL_LLM_API_KEY}
+  model: gpt-4o-mini
+  timeout: 30000
+  cacheTtl: 300000</pre>
+        <h2 class="spacer-md">Use Adapter</h2>
+        <pre class="code">const pipeline = new Pipeline('./config-with-llm.yaml');
+await pipeline.init();
+
+const adapter = pipeline.getLLMAdapter();
+if (adapter) {
+  const response = await adapter.generate('Summarize this text...');
+}</pre>
+      </section>
+    </main>
+    <script src="../assets/docs.js"></script>
+  </body>
+</html>

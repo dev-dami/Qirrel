@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qirrel Docs • Basic Usage</title>
+    <link rel="stylesheet" href="../assets/docs.css" />
+  </head>
+  <body>
+    <main class="docs-shell">
+      <header class="docs-nav" data-motion>
+        <a class="brand" href="../index.html">Qirrel Docs</a>
+        <nav class="nav-links"><a class="nav-pill" href="../index.html">Back</a></nav>
+      </header>
+      <section class="hero" data-motion>
+        <h1>Basic Usage</h1>
+        <p>Fastest path from install to working extraction output.</p>
+      </section>
+      <section class="section" data-motion>
+        <h2>Install</h2>
+        <pre class="code">bun add qirrel</pre>
+        <h2 class="spacer-md">Single Text</h2>
+        <pre class="code">import { processText } from 'qirrel';
+
+const out = await processText('Call +1 415 555 2671 and email me@example.com');
+console.log(out.data?.entities);</pre>
+        <div class="note spacer-sm">Use <code>result.data?.entities</code> (not <code>result.entities</code>).</div>
+      </section>
+    </main>
+    <script src="../assets/docs.js"></script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qirrel Docs • Events</title>
+    <link rel="stylesheet" href="../assets/docs.css" />
+  </head>
+  <body>
+    <main class="docs-shell">
+      <header class="docs-nav" data-motion><a class="brand" href="../index.html">Qirrel Docs</a><nav class="nav-links"><a class="nav-pill" href="../index.html">Back</a></nav></header>
+      <section class="hero" data-motion><h1>Pipeline Events</h1><p>Observe run-level and processor-level execution with lightweight handlers.</p></section>
+      <section class="section" data-motion>
+        <h2>Events</h2>
+        <ul class="list"><li><code>RunStart</code></li><li><code>RunEnd</code></li><li><code>ProcessorStart</code></li><li><code>ProcessorEnd</code></li><li><code>Error</code></li></ul>
+        <h2 class="spacer-md">Usage</h2>
+        <pre class="code">pipeline.on(PipelineEvent.RunEnd, ({ duration }) => {
+  console.log('done in', duration, 'ms');
+});</pre>
+      </section>
+    </main>
+    <script src="../assets/docs.js"></script>
+  </body>
+</html>

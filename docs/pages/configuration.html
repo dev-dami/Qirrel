@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qirrel Docs • Configuration</title>
+    <link rel="stylesheet" href="../assets/docs.css" />
+  </head>
+  <body>
+    <main class="docs-shell">
+      <header class="docs-nav" data-motion><a class="brand" href="../index.html">Qirrel Docs</a><nav class="nav-links"><a class="nav-pill" href="../index.html">Back</a></nav></header>
+      <section class="hero" data-motion><h1>Configuration</h1><p>Config loading order, sections, and env placeholder behavior.</p></section>
+      <section class="section" data-motion>
+        <h2>Loading Order</h2>
+        <ul class="list"><li>Custom path passed to <code>new Pipeline(configPath)</code></li><li><code>./miniparse.config.yaml</code> in current working directory</li><li>Bundled <code>default.yaml</code></li></ul>
+        <h2 class="spacer-md">Sample</h2>
+        <pre class="code">pipeline:
+  enableNormalization: true
+  enableCleaning: true
+  enableExtraction: true
+
+cache:
+  maxEntries: 1000
+  ttl: 300000
+
+llm:
+  enabled: true
+  provider: openai
+  apiKey: ${QIRREL_LLM_API_KEY}
+  timeout: 30000
+  cacheTtl: 300000</pre>
+        <div class="note spacer-sm">Supports placeholders like <code>${QIRREL_LLM_API_KEY:-fallback}</code>.</div>
+      </section>
+    </main>
+    <script src="../assets/docs.js"></script>
+  </body>
+</html>
