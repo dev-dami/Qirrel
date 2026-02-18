@@ -30,7 +30,10 @@ export function createCachedComponent(
       }
 
       // Generate a unique cache key based on the component name and context data
-      const cacheKey = generateContextHash(`${component.name}_${JSON.stringify(getRelevantContextData(ctx))}`);
+      const cacheKey = LruCacheManager.generateKey(
+        component.name,
+        getRelevantContextData(ctx),
+      );
 
       // Try to get cached result
       const cachedResult = cacheManager.get<QirrelContext>(cacheKey);
@@ -61,19 +64,6 @@ function getRelevantContextData(ctx: QirrelContext): any {
     model: ctx.llm?.model,
     temperature: ctx.llm?.temperature
   };
-}
-
-/**
- * Generate a hash from context data for consistent cache key generation
- */
-function generateContextHash(data: string): string {
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(36);
 }
 
 function cloneContext(context: QirrelContext): QirrelContext {

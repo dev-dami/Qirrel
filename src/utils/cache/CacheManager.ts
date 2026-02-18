@@ -2,6 +2,7 @@ import type { LLMResponse } from '../../llms/types';
 import type { QirrelContext } from '../../types';
 import type { CacheOptions, CacheValue } from './types';
 import { SimpleLruCache } from './cache';
+import { createHash } from "crypto";
 
 export class LruCacheManager extends SimpleLruCache {
   constructor(options: CacheOptions = {}) {
@@ -12,18 +13,46 @@ export class LruCacheManager extends SimpleLruCache {
    * Generate a hash key from input data for consistent cache key generation
    */
   public static generateKey(prefix: string, data: any): string {
-    const stringifiedData = JSON.stringify(data, Object.keys(data).sort());
-    // Simple hash function to create a consistent key from data
-    let hash = 0;
-    const str = prefix + stringifiedData;
+    const stableData = this.stableStringify(data);
+    const digest = createHash("sha256")
+      .update(`${prefix}:${stableData}`)
+      .digest("hex");
+    const typeName =
+      data === null
+        ? "null"
+        : Array.isArray(data)
+          ? "array"
+          : data?.constructor?.name || typeof data;
+    return `${prefix}_${digest}_${typeName}`;
+  }
 
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash |= 0; // Convert to 32bit integer
-    }
+  private static stableStringify(value: unknown): string {
+    const seen = new WeakSet<object>();
 
-    return `${prefix}_${Math.abs(hash).toString(36)}_${data.constructor?.name || typeof data}`;
+    const normalize = (input: unknown): unknown => {
+      if (input === null || typeof input !== "object") {
+        return input;
+      }
+
+      if (Array.isArray(input)) {
+        return input.map((entry) => normalize(entry));
+      }
+
+      const record = input as Record<string, unknown>;
+      if (seen.has(record)) {
+        return "[Circular]";
+      }
+
+      seen.add(record);
+      const normalized: Record<string, unknown> = {};
+      for (const key of Object.keys(record).sort()) {
+        normalized[key] = normalize(record[key]);
+      }
+      seen.delete(record);
+      return normalized;
+    };
+
+    return JSON.stringify(normalize(value));
   }
 }
 

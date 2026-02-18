@@ -12,6 +12,7 @@
     "test:coverage": "jest --coverage",
     "bench:agent": "bun run bench/agent-native.bench.ts",
     "bench:frameworks": "bun run bench/framework-comparison.bench.ts",
+    "bench:report": "bun run bench/report.bench.ts",
     "mcp:start": "bun run src/bin/qirrel-mcp.ts",
     "prepublishOnly": "npm run build"
   },

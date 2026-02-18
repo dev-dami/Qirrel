@@ -1,5 +1,6 @@
 import { Bench } from "tinybench";
 import { AgentBridge, createMcpRequestHandler } from "../src/agent";
+import { printRows, toRows, type BenchmarkRow } from "./shared";
 
 type HandlerArgs = { text: string };
 type HandlerResult = { normalized: string; hasEmail: boolean; length: number };
@@ -109,8 +110,19 @@ async function createAiSdkDispatcher(handler: typeof baseHandler): Promise<Dispa
   }
 }
 
-async function run(): Promise<void> {
-  const bench = new Bench({ time: 1_000, warmupTime: 300 });
+interface FrameworkBenchmarkOptions {
+  timeMs?: number;
+  warmupTimeMs?: number;
+  printTable?: boolean;
+}
+
+export async function runFrameworkComparisonBenchmark(
+  options: FrameworkBenchmarkOptions = {},
+): Promise<{ rows: BenchmarkRow[]; skipped: string[] }> {
+  const bench = new Bench({
+    time: options.timeMs ?? 1_000,
+    warmupTime: options.warmupTimeMs ?? 300,
+  });
   const qirrelDispatchers = await createQirrelDispatcher(baseHandler);
   const langchainDispatcher = await createLangChainDispatcher(baseHandler);
   const aiDispatcher = await createAiSdkDispatcher(baseHandler);
@@ -138,23 +150,23 @@ async function run(): Promise<void> {
   }
 
   await bench.run();
+  const rows = toRows(bench.tasks, "Direct handler");
+  const skipped = [
+    !langchainDispatcher ? "langchain" : null,
+    !aiDispatcher ? "ai" : null,
+  ].filter((value): value is string => Boolean(value));
 
-  const rows = bench.tasks.map((task) => ({
-    name: task.name,
-    "ops/sec": task.result ? Math.round(task.result.hz) : 0,
-    "avg ms": task.result ? Number(task.result.mean.toFixed(3)) : 0,
-    "p99 ms": task.result ? Number(task.result.p99.toFixed(3)) : 0,
-  }));
+  if (options.printTable ?? true) {
+    printRows(rows);
 
-  console.table(rows);
-
-  if (!langchainDispatcher || !aiDispatcher) {
-    const missing = [
-      !langchainDispatcher ? "langchain" : null,
-      !aiDispatcher ? "ai" : null,
-    ].filter(Boolean);
-    console.log(`Skipped optional frameworks: ${missing.join(", ")}`);
+    if (skipped.length > 0) {
+      console.log(`Skipped optional frameworks: ${skipped.join(", ")}`);
+    }
   }
+
+  return { rows, skipped };
 }
 
-void run();
+if (process.argv[1]?.includes("framework-comparison.bench.ts")) {
+  void runFrameworkComparisonBenchmark();
+}

@@ -105,6 +105,34 @@ describe('Extraction Pipeline Components', () => {
         });
       }
     });
+
+    it('should preserve distinct positions for repeated identical emails', async () => {
+      const input: QirrelContext = {
+        meta: {
+          requestId: 'test',
+          timestamp: Date.now(),
+        },
+        memory: {},
+        llm: {
+          model: 'test',
+          safety: {
+            allowTools: true
+          }
+        },
+        data: {
+          text: 'a@b.com x a@b.com',
+          tokens: [],
+          entities: [],
+        }
+      };
+
+      const result = await extractEmailsOnly.run(input);
+      const emails = result.data?.entities || [];
+
+      expect(emails).toHaveLength(2);
+      expect(emails[0]?.start).toBe(0);
+      expect(emails[1]?.start).toBe(10);
+    });
   });
 
   describe('extractPhonesOnly', () => {
@@ -163,6 +191,35 @@ describe('Extraction Pipeline Components', () => {
       const urls = result.data?.entities.map(e => e.value) || [];
       expect(urls).toContain('https://example.com');
       expect(urls).toContain('http://test.org');
+    });
+
+    it('should extract URL without trailing sentence punctuation', async () => {
+      const input: QirrelContext = {
+        meta: {
+          requestId: 'test',
+          timestamp: Date.now(),
+        },
+        memory: {},
+        llm: {
+          model: 'test',
+          safety: {
+            allowTools: true
+          }
+        },
+        data: {
+          text: 'Visit https://example.com.',
+          tokens: [],
+          entities: [],
+        }
+      };
+
+      const result = await extractUrlsOnly.run(input);
+      const urls = result.data?.entities || [];
+
+      expect(urls).toHaveLength(1);
+      expect(urls[0]?.value).toBe('https://example.com');
+      expect(urls[0]?.start).toBe(6);
+      expect(urls[0]?.end).toBe(25);
     });
   });
 

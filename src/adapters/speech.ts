@@ -53,11 +53,10 @@ export function preprocessSpeechInput(
 
   // Split text to words using our function without regex
   const words = splitByWhitespace(text);
-  const fillerWords = new Set(['um', 'umm', 'uh', 'uhh', 'like', 'you know', 'so', 'well', 'actually', 'basically', 'literally']);
+  const singleWordFillers = new Set(['um', 'umm', 'uh', 'uhh', 'like', 'so', 'well', 'actually', 'basically', 'literally']);
   const processedWords: string[] = [];
 
   // Variables for tracking patterns during single pass
-  let prevWord: string | null = null;
   let prevCleanWord: string | null = null;
 
   for (let i = 0; i < words.length; i++) {
@@ -65,13 +64,21 @@ export function preprocessSpeechInput(
     if (!word) continue;
 
     const cleanWord = removePunctuation(word).toLowerCase();
+    const nextWord = words[i + 1];
+    const nextCleanWord = nextWord ? removePunctuation(nextWord).toLowerCase() : null;
+
+    // Check for single-word and multi-word filler phrases.
+    if (opts.removeFillerWords) {
+      if (singleWordFillers.has(cleanWord)) {
+        continue;
+      }
+      if (cleanWord === 'you' && nextCleanWord === 'know') {
+        i += 1;
+        continue;
+      }
+    }
 
     let shouldIncludeWord = true;
-
-    // Check for filler words
-    if (opts.removeFillerWords && fillerWords.has(cleanWord)) {
-      shouldIncludeWord = false;
-    }
 
     // Check for repetitions
     if (opts.detectRepetitions && prevCleanWord === cleanWord) {
@@ -94,7 +101,6 @@ export function preprocessSpeechInput(
 
     // Update previous word for repetition detection
     prevCleanWord = cleanWord;
-    prevWord = word;
   }
 
   return processedWords.join(' ');
@@ -106,7 +112,7 @@ export function analyzeSpeechPatterns(text: string): {
   stutters: string[];
 } {
   const words = splitByWhitespace(text);
-  const fillerWords = new Set(['um', 'umm', 'uh', 'uhh', 'like', 'you know', 'so', 'well', 'actually', 'basically', 'literally']);
+  const singleWordFillers = new Set(['um', 'umm', 'uh', 'uhh', 'like', 'so', 'well', 'actually', 'basically', 'literally']);
   const detectedFillers: string[] = [];
   const detectedRepetitions: string[] = [];
   const detectedStutters: string[] = [];
@@ -119,10 +125,18 @@ export function analyzeSpeechPatterns(text: string): {
     if (!word) continue;
 
     const cleanWord = removePunctuation(word).toLowerCase();
+    const nextWord = words[i + 1];
+    const nextCleanWord = nextWord ? removePunctuation(nextWord).toLowerCase() : null;
 
     // Find filler words
-    if (fillerWords.has(cleanWord)) {
+    if (singleWordFillers.has(cleanWord)) {
       detectedFillers.push(word);
+    }
+    if (cleanWord === 'you' && nextCleanWord === 'know') {
+      detectedFillers.push('you know');
+      i += 1;
+      prevCleanWord = 'know';
+      continue;
     }
 
     // Find repetitions

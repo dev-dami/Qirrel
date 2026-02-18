@@ -1,103 +1,105 @@
 # Agent-Native Integration
 
-[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Benchmarks](./benchmarks.md) | [Framework Comparison](./framework-comparison.md) | [Ecosystem](./ecosystem-comparison.md)
 
-Qirrel now includes an agent-native layer with:
+Qirrel ships an agent-native layer so the same parsing logic can be consumed as tools in agent runtimes.
 
-- a reusable `AgentBridge` abstraction
-- built-in Qirrel tools (`qirrel.parse_text`, `qirrel.parse_batch`)
-- built-in explainer tool (`qirrel.tool_help`) for model self-discovery
-- a lightweight MCP JSON-RPC server (`qirrel-mcp`)
-- tinybench benchmarks for direct vs agent-mode overhead
+## What You Get
 
-## Core Idea
+- `AgentBridge` abstraction for registering/calling tools.
+- Built-in tools:
+  - `qirrel.parse_text`
+  - `qirrel.parse_batch`
+  - `qirrel.tool_help`
+  - `qirrel.capabilities`
+- MCP JSON-RPC request handler and stdio server (`qirrel-mcp`).
 
-Use one structure for both classic API calls and agent tools:
-
-- Regular function: `processText(text)`
-- Agent tool: `qirrel.parse_text({ text })`
-
-`AgentBridge.registerApiTool(...)` adapts non-agent-native handlers into MCP-style tool results with both:
-
-- `content` (agent-readable text)
-- `structuredContent` (machine-usable JSON)
-
-## Use the Built-In Bridge
+## Core Usage
 
 ```ts
-import { createQirrelAgentBridge } from "qirrel";
+import { createQirrelAgentBridge } from 'qirrel';
 
 const bridge = createQirrelAgentBridge();
-const result = await bridge.callTool("qirrel.parse_text", {
-  text: "Email hello@example.com",
+const result = await bridge.callTool('qirrel.parse_text', {
+  text: 'Email hello@example.com',
 });
 
 console.log(result.structuredContent);
 ```
 
-## Let Models Self-Discover Tools
+## Tool Discovery for Models
 
 ```ts
-const help = await bridge.callTool("qirrel.tool_help", {
-  name: "qirrel.parse_text",
+const help = await bridge.callTool('qirrel.tool_help', {
+  name: 'qirrel.parse_text',
 });
 
 console.log(help.structuredContent);
 ```
 
-`qirrel.tool_help` returns machine-usable metadata (`description`, `inputSchema`, `examples`) so agents can plan tool calls correctly.
+Use `qirrel.tool_help` so planners can read `inputSchema`, examples, and descriptions before invoking tools.
 
-## Wrap Your Existing APIs
-
-```ts
-import { AgentBridge } from "qirrel";
-
-const bridge = new AgentBridge();
-
-bridge.registerApiTool(
-  {
-    name: "inventory.lookup",
-    description: "Lookup stock by SKU",
-    inputSchema: {
-      type: "object",
-      properties: { sku: { type: "string" } },
-      required: ["sku"],
-    },
-  },
-  async ({ sku }: { sku: string }) => {
-    return { sku, inStock: true };
-  },
-);
-```
-
-## Start MCP Server (stdio)
+## MCP Server (stdio)
 
 ```bash
 bun run mcp:start
 ```
 
-Or after install:
+After package install:
 
 ```bash
 qirrel-mcp
 ```
 
-## Benchmark Agent Overhead
+Optional config path argument:
 
 ```bash
-bun run bench:agent
+qirrel-mcp ./miniparse.config.yaml
 ```
 
-This compares:
+## MCP Handler Behavior (Current)
 
-- direct API (`processText`)
-- tool call via `AgentBridge`
-- MCP `tools/call` request handler path
+Qirrel currently handles these methods:
+- `initialize`
+- `tools/list`
+- `tools/call`
+- `ping`
 
-## Benchmark Against Other Lightweight Frameworks
+Implemented protocol version default: `2025-03-26`.
 
-```bash
-bun run bench:frameworks
+Notifications (requests without `id`) are processed but no response is written.
+
+## Error Codes Returned
+
+- `-32700`: parse error (invalid JSON line)
+- `-32600`: invalid request
+- `-32601`: method not found
+- `-32602`: invalid params
+- `-32000`: tool execution/internal failure
+
+## Registering Your Own API as Tools
+
+```ts
+import { AgentBridge } from 'qirrel';
+
+const bridge = new AgentBridge();
+
+bridge.registerApiTool(
+  {
+    name: 'inventory.lookup',
+    description: 'Lookup stock by SKU',
+    inputSchema: {
+      type: 'object',
+      properties: { sku: { type: 'string' } },
+      required: ['sku'],
+    },
+  },
+  async ({ sku }: { sku: string }) => ({ sku, inStock: true }),
+);
 ```
 
-See detailed benchmark guidance in [Benchmarks](./benchmarks.md).
+## Operational Guidance
+
+- Keep tool schemas strict and explicit.
+- Treat `structuredContent` as the machine contract and `content` as human-readable fallback.
+- For transport interoperability planning, pair this page with [Framework Comparison](./framework-comparison.md) and [Ecosystem Comparison](./ecosystem-comparison.md).

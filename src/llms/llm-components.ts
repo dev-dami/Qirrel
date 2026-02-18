@@ -2,6 +2,12 @@ import type { PipelineComponent } from "../core/types";
 import type { QirrelContext } from "../types";
 import type { LLMAdapter, LLMConfig } from "./types";
 
+function ensureEntityArray(data: NonNullable<QirrelContext["data"]>): void {
+  if (!Array.isArray(data.entities)) {
+    (data as { entities?: unknown }).entities = [];
+  }
+}
+
 /**
  * Creates an LLM-based text summarizer component
  */
@@ -19,6 +25,7 @@ export const createLLMSummarizer = (
         if (!input.data) {
           return input;
         }
+        ensureEntityArray(input.data);
 
         const prompt = `Summarize the following text in ${maxSummaryLength} words or fewer: "${input.data.text}"`;
 
@@ -53,6 +60,7 @@ export const createLLMSentimentAnalyzer = (
         if (!input.data) {
           return input;
         }
+        ensureEntityArray(input.data);
 
         const prompt = `Analyze the sentiment of the following text. Respond with only one of these values: positive, negative, or neutral.\n\nText: "${input.data.text}"`;
 
@@ -90,6 +98,7 @@ export const createLLMIntentClassifier = (
         if (!input.data) {
           return input;
         }
+        ensureEntityArray(input.data);
 
         const prompt = `Classify the intent of the following text. Respond with only one of these intents: ${possibleIntents.join(", ")}.\n\nText: "${input.data.text}"`;
 
@@ -133,6 +142,7 @@ export const createLLMTopicClassifier = (
         if (!input.data) {
           return input;
         }
+        ensureEntityArray(input.data);
 
         const prompt = `Identify the main topic(s) of the following text. Respond with a comma-separated list of topics.\n\nText: "${input.data.text}"`;
 

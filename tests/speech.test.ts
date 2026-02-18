@@ -53,6 +53,11 @@ describe('Speech Processing Functions', () => {
       const result = preprocessSpeechInput('Well um like basically');
       expect(result).toBe('');
     });
+
+    it('should remove multi-word filler phrases such as you know', () => {
+      const result = preprocessSpeechInput('you know this is fine');
+      expect(result).toBe('this is fine');
+    });
   });
 
   describe('analyzeSpeechPatterns', () => {
@@ -99,6 +104,13 @@ describe('Speech Processing Functions', () => {
 
       expect(result.fillerWords).toContain('um...');
       expect(result.repetitions.length).toBeGreaterThanOrEqual(0); // May or may not detect repetitions depending on implementation
+    });
+
+    it('should detect multi-word filler phrases such as you know', () => {
+      const result = analyzeSpeechPatterns('Well, you know this works');
+
+      expect(result.fillerWords).toContain('Well,');
+      expect(result.fillerWords).toContain('you know');
     });
   });
 });

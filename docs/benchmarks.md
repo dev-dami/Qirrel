@@ -1,44 +1,66 @@
 # Benchmarks
 
-[Docs Home](./README.md) | [Agent-Native](./agent-native.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+[Docs Home](./README.md) | [Agent-Native](./agent-native.md) | [Benchmark Report](./benchmark-report.md) | [Framework Comparison](./framework-comparison.md) | [Ecosystem](./ecosystem-comparison.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md)
 
-Qirrel includes two benchmark tracks:
+This page explains what benchmark scripts measure, what they do not measure, and how to interpret results safely.
 
-## 1) Agent Overhead Benchmark
+## Benchmark Tracks
+
+### 1) Agent Overhead
 
 ```bash
 bun run bench:agent
 ```
 
 Measures end-to-end path cost for:
+- direct parse (`processText`)
+- `AgentBridge` tool path
+- MCP `tools/call` handler path
 
-- direct Qirrel parsing (`processText`)
-- Qirrel `AgentBridge` tool call
-- Qirrel MCP `tools/call` handler path
-
-## 2) Lightweight Framework Comparison
+### 2) Framework Dispatch Comparison
 
 ```bash
 bun run bench:frameworks
 ```
 
-Measures local tool-dispatch overhead with the same handler:
-
+Measures local tool-dispatch overhead with one shared handler implementation:
 - Direct handler baseline
-- Qirrel `AgentBridge`
-- Qirrel MCP request handler
-- LangChain `tool()` wrapper (if installed)
-- Vercel AI SDK `tool()` wrapper (if installed)
+- Qirrel AgentBridge
+- Qirrel MCP handler
+- LangChain `tool()` (if installed)
+- AI SDK `tool()` (if installed)
 
-This benchmark is API-free and model-free by design, so results isolate orchestration overhead.
+### 3) Markdown Report Generation
 
-## Reading Results
+```bash
+bun run bench:report
+```
 
-- `ops/sec` higher is better.
-- `avg ms` lower is better.
-- `p99 ms` lower is better (tail latency stability).
+Generates/updates:
+- [Benchmark Report](./benchmark-report.md)
 
-## Notes
+## Methodology Notes
 
-- Benchmarks are sensitive to CPU, thermal state, and background load.
-- Always compare runs on the same machine and runtime settings.
+- Benchmarks are local machine measurements, not universal truth.
+- This suite isolates orchestration overhead (no external model API calls in framework comparison track).
+- Optional frameworks are skipped if dependencies are unavailable.
+
+## How to Read Metrics
+
+- `ops/sec`: higher is better.
+- `avg ms`: lower is better.
+- `p99 ms`: lower is better for tail latency stability.
+- `vs direct`: slowdown relative to direct baseline (`1.00x` = equal to baseline).
+
+## Reproducibility Checklist
+
+1. Close resource-heavy apps.
+2. Run each benchmark at least twice.
+3. Compare runs on the same runtime version and machine profile.
+4. Commit results only when stable.
+
+## Common Misinterpretations
+
+- A faster wrapper in synthetic benchmarks does not automatically mean better full-system latency.
+- Cross-machine comparisons are usually invalid unless hardware/runtime are normalized.
+- Throughput alone is not enough; include ergonomics, interoperability, and failure handling in selection decisions.

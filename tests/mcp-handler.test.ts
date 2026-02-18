@@ -34,6 +34,9 @@ describe("mcp request handler", () => {
       toolsResponse.result?.tools.some((tool: { name: string }) => tool.name === "qirrel.tool_help"),
     ).toBe(true);
     expect(
+      toolsResponse.result?.tools.some((tool: { name: string }) => tool.name === "qirrel.capabilities"),
+    ).toBe(true);
+    expect(
       toolsResponse.result?.tools.some(
         (tool: { name: string; examples?: unknown[]; annotations?: object }) =>
           tool.name === "qirrel.parse_text" &&
@@ -85,6 +88,26 @@ describe("mcp request handler", () => {
       tool: expect.objectContaining({
         name: "qirrel.parse_batch",
       }),
+    });
+  });
+
+  test("capabilities is callable through MCP and returns feature profile", async () => {
+    const bridge = createQirrelAgentBridge();
+    const handle = createMcpRequestHandler(bridge);
+
+    const response = await handle({
+      jsonrpc: "2.0",
+      id: 5,
+      method: "tools/call",
+      params: {
+        name: "qirrel.capabilities",
+      },
+    });
+
+    expect(response.id).toBe(5);
+    expect(response.result?.structuredContent).toMatchObject({
+      name: "qirrel",
+      capabilities: expect.arrayContaining(["mcp_server"]),
     });
   });
 });

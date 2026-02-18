@@ -22,6 +22,28 @@ function resolveConfigPath(
 
 export function createQirrelAgentBridge(defaultConfigPath?: string): AgentBridge {
   const bridge = new AgentBridge();
+  const capabilityProfile = {
+    name: "qirrel",
+    mode: "agent_native",
+    capabilities: [
+      "entity_extraction",
+      "phone_detection",
+      "batch_processing",
+      "mcp_server",
+      "tool_self_discovery",
+      "api_to_tool_bridge",
+    ],
+    toolNames: [
+      "qirrel.parse_text",
+      "qirrel.parse_batch",
+      "qirrel.tool_help",
+      "qirrel.capabilities",
+    ],
+    interoperability: {
+      mcpMethods: ["initialize", "tools/list", "tools/call"],
+      bridgePattern: "registerApiTool",
+    },
+  };
 
   const parseTextDefinition: AgentToolDefinition = {
     name: "qirrel.parse_text",
@@ -128,6 +150,42 @@ export function createQirrelAgentBridge(defaultConfigPath?: string): AgentBridge
         args.concurrency === undefined ? undefined : { concurrency: args.concurrency },
       );
     },
+  );
+
+  bridge.registerTool(
+    {
+      name: "qirrel.capabilities",
+      description:
+        "Return Qirrel feature profile and interoperability surface for agent/tool selection",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {},
+      },
+      annotations: {
+        title: "Qirrel Capabilities",
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      examples: [
+        {
+          title: "Get feature profile",
+          arguments: {},
+        },
+      ],
+      tags: ["qirrel", "capabilities", "discovery", "interop"],
+    },
+    () => ({
+      content: [
+        {
+          type: "text" as const,
+          text: "Qirrel capabilities include deterministic extraction, MCP compatibility, and API-to-tool bridging.",
+        },
+      ],
+      structuredContent: capabilityProfile,
+    }),
   );
 
   bridge.registerTool(

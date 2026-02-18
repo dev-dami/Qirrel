@@ -133,6 +133,12 @@ Framework comparison benchmark:
 bun run bench:frameworks
 ```
 
+Generate local markdown benchmark report:
+
+```bash
+bun run bench:report
+```
+
 ## Documentation
 
 - [Docs Home](./docs/README.md)
@@ -146,6 +152,9 @@ bun run bench:frameworks
 - [Architecture Walkthrough](./docs/walkthrough.md)
 - [Agent-Native Integration](./docs/agent-native.md)
 - [Benchmarks](./docs/benchmarks.md)
+- [Benchmark Report (Local Machine)](./docs/benchmark-report.md)
+- [Framework Comparison](./docs/framework-comparison.md)
+- [Ecosystem Comparison](./docs/ecosystem-comparison.md)
 - [Agent Feature Roadmap](./docs/agent-roadmap.md)
 
 ## Contributing

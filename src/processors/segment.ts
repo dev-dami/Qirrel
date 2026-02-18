@@ -5,6 +5,22 @@ function isWhitespace(code: number): boolean {
   return code === 32 || code === 9 || code === 10 || code === 13; // space, tab, newline, carriage return
 }
 
+function isSentencePunctuation(char: string): boolean {
+  return char === "." || char === "!" || char === "?";
+}
+
+function isDigitChar(char: string): boolean {
+  const code = char.charCodeAt(0);
+  return code >= 48 && code <= 57;
+}
+
+function isLikelySentenceStarter(char: string | undefined): boolean {
+  if (!char) {
+    return false;
+  }
+  return /[A-Z"'([{]/.test(char);
+}
+
 export const segment: PipelineComponent = {
   name: "segment",
   version: "1.0.0",
@@ -18,30 +34,56 @@ export const segment: PipelineComponent = {
       let sentenceStart = 0;
 
       for (let i = 0; i < text.length; i++) {
-        const char = text[i];
+        const char = text[i]!;
 
-        // Check if this character is a sentence-ending punctuation
-        if (char === '.' || char === '!' || char === '?') {
-          // Look ahead to see if followed by whitespace
-          let j = i + 1;
-          while (j < text.length && isWhitespace(text.charCodeAt(j))) {
-            j++;
-          }
-
-          // If there's whitespace after punctuation, consider it a sentence boundary
-          if (j < text.length || i === text.length - 1) {
-            const sentence = text.substring(sentenceStart, j).trim();
-            if (sentence.length > 0) {
-              sentences.push(sentence);
-              sentencePositions.push({
-                start: sentenceStart,
-                end: j
-              });
-            }
-            sentenceStart = j;
-            i = j - 1; // Continue from after the whitespace
-          }
+        if (!isSentencePunctuation(char)) {
+          continue;
         }
+
+        // Do not split decimals like 3.14.
+        if (
+          char === "." &&
+          i > 0 &&
+          i + 1 < text.length &&
+          isDigitChar(text[i - 1]!) &&
+          isDigitChar(text[i + 1]!)
+        ) {
+          continue;
+        }
+
+        // Collapse punctuation runs such as "..." or "?!"
+        let punctEnd = i;
+        while (punctEnd + 1 < text.length && isSentencePunctuation(text[punctEnd + 1]!)) {
+          punctEnd++;
+        }
+
+        let j = punctEnd + 1;
+        let sawWhitespace = false;
+        while (j < text.length && isWhitespace(text.charCodeAt(j))) {
+          sawWhitespace = true;
+          j++;
+        }
+
+        const nextChar = j < text.length ? text[j] : undefined;
+        const isBoundary =
+          j >= text.length || sawWhitespace || isLikelySentenceStarter(nextChar);
+
+        if (!isBoundary) {
+          i = punctEnd;
+          continue;
+        }
+
+        const sentence = text.substring(sentenceStart, j).trim();
+        if (sentence.length > 0) {
+          sentences.push(sentence);
+          sentencePositions.push({
+            start: sentenceStart,
+            end: j
+          });
+        }
+
+        sentenceStart = j;
+        i = j - 1;
       }
 
       // Handle the last part if it doesn't end with punctuation

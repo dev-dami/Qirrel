@@ -2,6 +2,16 @@ import type { PipelineComponent } from "../core/types";
 import type { QirrelContext } from "../types";
 import type { LLMProcessorOptions, LLMAdapter } from "./types";
 
+function ensureEntityArray(data: NonNullable<QirrelContext["data"]>): void {
+  if (!Array.isArray(data.entities)) {
+    (data as { entities?: unknown }).entities = [];
+  }
+}
+
+function isValidRange(start: number, end: number, maxLength: number): boolean {
+  return Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end >= start && end <= maxLength;
+}
+
 export const createLLMProcessor = (
   options: LLMProcessorOptions,
 ): PipelineComponent => {
@@ -17,6 +27,10 @@ export const createLLMProcessor = (
           options.promptTemplate,
           options.config,
         );
+
+        if (!result || typeof result !== "object") {
+          return input;
+        }
 
         // Return the result as is (should be QirrelContext)
         return result;
@@ -42,6 +56,7 @@ export const createLLMEntityExtractor = (
         if (!input.data) {
           return input;
         }
+        ensureEntityArray(input.data);
 
         const enhancedPrompt = `${promptTemplate}\n\nText: ${JSON.stringify(input.data.text)}\n\nPlease extract entities in JSON format with structure: {entities: [{type: string, value: string, start: number, end: number}]}`;
 
@@ -88,12 +103,15 @@ export const createLLMEntityExtractor = (
           const parsed = JSON.parse(jsonString);
 
           if (parsed.entities && Array.isArray(parsed.entities)) {
+            const textLength = input.data.text.length;
             for (const entity of parsed.entities) {
               if (
-                entity.type &&
-                entity.value &&
+                entity &&
+                typeof entity.type === "string" &&
+                typeof entity.value === "string" &&
                 typeof entity.start === "number" &&
-                typeof entity.end === "number"
+                typeof entity.end === "number" &&
+                isValidRange(entity.start, entity.end, textLength)
               ) {
                 input.data.entities.push({
                   type: entity.type,

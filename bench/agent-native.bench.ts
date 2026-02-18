@@ -1,14 +1,26 @@
 import { Bench } from "tinybench";
 import { processText } from "../src/api";
 import { createMcpRequestHandler, createQirrelAgentBridge } from "../src/agent";
+import { printRows, toRows, type BenchmarkRow } from "./shared";
 
 const sampleText =
   "Contact support@example.com or +1 415 555 2671 and visit https://example.com";
 
-async function run(): Promise<void> {
+interface AgentBenchmarkOptions {
+  timeMs?: number;
+  warmupTimeMs?: number;
+  printTable?: boolean;
+}
+
+export async function runAgentNativeBenchmark(
+  options: AgentBenchmarkOptions = {},
+): Promise<BenchmarkRow[]> {
   const bridge = createQirrelAgentBridge();
   const handle = createMcpRequestHandler(bridge);
-  const bench = new Bench({ time: 1_000, warmupTime: 300 });
+  const bench = new Bench({
+    time: options.timeMs ?? 1_000,
+    warmupTime: options.warmupTimeMs ?? 300,
+  });
 
   bench.add("direct: processText()", async () => {
     await processText(sampleText);
@@ -31,15 +43,15 @@ async function run(): Promise<void> {
   });
 
   await bench.run();
+  const rows = toRows(bench.tasks, "direct: processText()");
 
-  const rows = bench.tasks.map((task) => ({
-    name: task.name,
-    "ops/sec": task.result ? Math.round(task.result.hz) : 0,
-    "avg ms": task.result ? Number(task.result.mean.toFixed(3)) : 0,
-    "p99 ms": task.result ? Number(task.result.p99.toFixed(3)) : 0,
-  }));
+  if (options.printTable ?? true) {
+    printRows(rows);
+  }
 
-  console.table(rows);
+  return rows;
 }
 
-void run();
+if (process.argv[1]?.includes("agent-native.bench.ts")) {
+  void runAgentNativeBenchmark();
+}

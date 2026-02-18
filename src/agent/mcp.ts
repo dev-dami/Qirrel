@@ -28,6 +28,10 @@ const DEFAULT_SERVER_INFO: McpServerInfo = {
   version: "0.2.1",
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function successResponse(id: string | number | null, result: unknown): JsonRpcSuccessResponse {
   return {
     jsonrpc: "2.0",
@@ -90,6 +94,12 @@ export function createMcpRequestHandler(
             return errorResponse(request.id ?? null, {
               code: -32602,
               message: "Invalid params: tools/call requires 'name'",
+            });
+          }
+          if (params.arguments !== undefined && !isRecord(params.arguments)) {
+            return errorResponse(request.id ?? null, {
+              code: -32602,
+              message: "Invalid params: tools/call 'arguments' must be an object",
             });
           }
 

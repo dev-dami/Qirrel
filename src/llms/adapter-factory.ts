@@ -1,6 +1,14 @@
 import { GenericLLMAdapter } from "./generic";
 import type { LLMAdapter, LLMConfig } from "./types";
 
+async function loadModule(modulePath: string): Promise<Record<string, unknown>> {
+  try {
+    return require(modulePath) as Record<string, unknown>;
+  } catch {
+    return (await import(modulePath)) as Record<string, unknown>;
+  }
+}
+
 export class LLMAdapterFactory {
   static async create(
     config: LLMConfig,
@@ -11,7 +19,9 @@ export class LLMAdapterFactory {
       case "gemini":
       case "google":
         try {
-          const { GeminiLLMAdapter } = await import("./gemini.js");
+          const { GeminiLLMAdapter } = (await loadModule("./gemini")) as {
+            GeminiLLMAdapter: new (cfg: LLMConfig, useCache: boolean) => LLMAdapter;
+          };
           return new GeminiLLMAdapter(config, enableCache);
         } catch (error) {
           throw new Error(
@@ -22,7 +32,9 @@ export class LLMAdapterFactory {
       case "openai-compatible":
         {
           try {
-            const { OpenAILLMAdapter } = await import("./openai.js");
+            const { OpenAILLMAdapter } = (await loadModule("./openai")) as {
+              OpenAILLMAdapter: new (cfg: LLMConfig, useCache: boolean) => LLMAdapter;
+            };
             return new OpenAILLMAdapter(config, enableCache);
           } catch (err) {
             throw new Error(`Failed to load OpenAI adapter: ${err}`);

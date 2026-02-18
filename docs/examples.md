@@ -1,6 +1,8 @@
 # Usage Examples
 
-[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md)
+[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md) | [Benchmarks](./benchmarks.md) | [Ecosystem](./ecosystem-comparison.md)
+
+This page contains copy-paste examples for common integration patterns.
 
 ## Single Input
 
@@ -8,10 +10,10 @@
 import { processText } from 'qirrel';
 
 const result = await processText('Contact us at support@example.com or +1 415 555 2671');
-console.log(result.data?.entities);
+console.log(result.data?.entities ?? []);
 ```
 
-## Batch Input
+## Batch Input with Concurrency
 
 ```ts
 import { processTexts } from 'qirrel';
@@ -22,10 +24,10 @@ const results = await processTexts(
   { concurrency: 2 },
 );
 
-console.log(results.map((r) => r.data?.entities));
+console.log(results.map((r) => r.data?.entities ?? []));
 ```
 
-## Pipeline + Events
+## Pipeline with Events
 
 ```ts
 import { Pipeline, PipelineEvent } from 'qirrel';
@@ -41,7 +43,7 @@ pipeline.on(PipelineEvent.RunEnd, ({ duration }) => {
 });
 
 const result = await pipeline.process('Visit https://example.com and pay 19.99');
-console.log(result.data?.entities);
+console.log(result.data?.entities ?? []);
 ```
 
 ## Custom Processor
@@ -75,17 +77,24 @@ const pipeline = new Pipeline();
 pipeline.addCustomProcessor(hashtagProcessor);
 
 const result = await pipeline.process('Follow #qirrel and #nlp');
-console.log(result.data?.entities);
+console.log(result.data?.entities ?? []);
 ```
 
-## Phone Detection Stress Sample
+## Agent Tool Call Example
 
 ```ts
-import { processText } from 'qirrel';
+import { createQirrelAgentBridge } from 'qirrel';
 
-const text = 'US +1 415 555 2671, UK +44 20 7946 0958, NG +234 803 123 4567';
-const result = await processText(text);
+const bridge = createQirrelAgentBridge();
+const result = await bridge.callTool('qirrel.parse_text', {
+  text: 'US +1 415 555 2671, site https://example.com',
+});
 
-const phones = (result.data?.entities ?? []).filter((e) => e.type === 'phone');
-console.log(phones);
+console.log(result.structuredContent);
 ```
+
+## Choosing the Right Example
+
+- Start with `processText` for scripts and one-off jobs.
+- Use reusable `Pipeline` for services.
+- Use `AgentBridge`/MCP when integrating with agent runtimes.

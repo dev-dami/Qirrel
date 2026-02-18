@@ -1,8 +1,16 @@
 # Qirrel Documentation
 
-GitHub-first Markdown docs for Qirrel.
+This directory is the source-of-truth for how to use Qirrel in production.
 
-## Start Here
+## How to Use This Docs Set
+
+1. Start with [Basic Usage](./usage/basic.md) if you are integrating Qirrel for the first time.
+2. Read [API Reference](./api.md) for exact signatures and behavior.
+3. Read [Configuration Guide](./configuration.md) before shipping to production.
+4. Use [Architecture Walkthrough](./walkthrough.md) to understand internals and extension points.
+5. If you are integrating with agents, read [Agent-Native Integration](./agent-native.md).
+
+## Core Docs
 
 - [Project README](../README.MD)
 - [API Reference](./api.md)
@@ -13,12 +21,22 @@ GitHub-first Markdown docs for Qirrel.
 - [Pipeline Events](./events.md)
 - [LLM Integration](./integrations/llm.md)
 - [Architecture Walkthrough](./walkthrough.md)
+
+## Agent and Interop Docs
+
 - [Agent-Native Integration](./agent-native.md)
-- [Benchmarks](./benchmarks.md)
 - [Agent Feature Roadmap](./agent-roadmap.md)
 
-## Quick Navigation
+## Benchmark and Positioning Docs
 
-- Core: [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md)
-- Usage: [Basic](./usage/basic.md) | [Caching](./usage/caching.md)
-- Advanced: [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md) | [Benchmarks](./benchmarks.md) | [Roadmap](./agent-roadmap.md)
+- [Benchmarks](./benchmarks.md)
+- [Benchmark Report (Local Machine)](./benchmark-report.md)
+- [Framework Comparison](./framework-comparison.md)
+- [Ecosystem Comparison](./ecosystem-comparison.md)
+
+## Conventions Used in These Docs
+
+- Examples use TypeScript.
+- Install/run commands prefer Bun to match this repository scripts.
+- Config keys and runtime behavior are documented against the current `src/*` implementation.
+- When behavior differs by provider (for example LLM adapters), docs call that out explicitly.

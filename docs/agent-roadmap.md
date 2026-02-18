@@ -1,41 +1,78 @@
 # Agent Feature Roadmap
 
-[Docs Home](./README.md) | [Agent-Native](./agent-native.md) | [Benchmarks](./benchmarks.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+[Docs Home](./README.md) | [Agent-Native](./agent-native.md) | [Benchmarks](./benchmarks.md) | [Framework Comparison](./framework-comparison.md) | [Ecosystem](./ecosystem-comparison.md)
 
-This roadmap captures high-value features for making Qirrel a stronger agent platform while keeping the current lightweight core.
+This roadmap tracks high-value work to strengthen Qirrel as an agent-compatible runtime while preserving lightweight deterministic parsing.
 
-## High-Impact Next Features
+## Roadmap Principles
 
-1. MCP Resources and Prompts
-- Add `resources/list` + `resources/read` for reusable parsing schemas and saved extraction profiles.
-- Add `prompts/list` + `prompts/get` for prebuilt extraction prompts and workflow templates.
+- Keep deterministic parsing as a stable core.
+- Add agent/runtime capabilities as optional layers.
+- Prefer explicit contracts (schemas, errors, protocol behavior).
+- Avoid hidden coupling between direct API mode and agent mode.
 
-2. Strict Tool I/O Contracts
-- Add optional strict-mode schema enforcement for tool arguments and tool outputs.
-- Return standardized validation errors in MCP `tools/call`.
+## Priority Backlog
 
-3. Agent Memory Layer
-- Add optional lightweight memory adapters:
+### 1. MCP Resources and Prompts
+
+**Why:** improves interoperability and discoverability in MCP-native orchestrators.
+
+**Candidate scope:**
+- `resources/list`, `resources/read`
+- `prompts/list`, `prompts/get`
+- reusable extraction profile resources
+
+**Done when:** tools + resources + prompts can be consumed by a generic MCP client without custom glue.
+
+### 2. Strict Tool I/O Contracts
+
+**Why:** tool invocation failures should be deterministic and machine-actionable.
+
+**Candidate scope:**
+- strict schema validation for `tools/call` arguments
+- optional output-schema enforcement
+- standardized validation error payloads
+
+**Done when:** invalid inputs consistently return structured, predictable error responses.
+
+### 3. Memory Adapters
+
+**Why:** many agents need short-term and long-term memory surfaces.
+
+**Candidate scope:**
 - in-memory session memory
-- SQLite-backed memory
+- SQLite adapter
 - key-value interface for external stores
 
-4. Human-in-the-Loop Controls
-- Add approval-gated tools (e.g., `requiresApproval: true`) with resumable handoff.
-- Add policy hooks for deny/allow logic by tool name or argument pattern.
+**Done when:** memory adapters are pluggable without changing parse pipeline internals.
 
-5. Tracing + Evaluations
-- Add event-based trace exporter (JSONL/OTel-friendly format).
-- Add benchmark+eval harness for tool success rate, latency, and schema-violation rate.
+### 4. Human-in-the-Loop Controls
 
-## Why These Features
+**Why:** operations teams need explicit approval controls for sensitive flows.
 
-- They map to common agent framework capabilities without forcing heavy runtime dependencies.
-- They preserve Qirrel’s current shape: deterministic parsing pipeline + optional agent wrapper.
-- They keep direct API users and agent users on the same core logic.
+**Candidate scope:**
+- tool-level approval metadata
+- pause/resume workflow hooks
+- policy hooks (allow/deny by tool and argument shape)
 
-## Research Notes
+**Done when:** approvals can be enforced by policy without forking core runtime.
 
-- MCP evolution emphasizes standardized tools/resources/prompts for interoperability.
-- Modern agent SDKs emphasize structured schemas, retries, guardrails, and traceability.
-- Lightweight frameworks vary heavily in dispatch overhead; benchmark before choosing orchestration.
+### 5. Tracing and Evaluations
+
+**Why:** production agent stacks need observability and reproducible quality checks.
+
+**Candidate scope:**
+- event-to-trace export (JSONL/OTel-friendly)
+- eval harness for tool success rate/latency/schema violations
+
+**Done when:** teams can compare versions with repeatable metrics and trace artifacts.
+
+## Suggested Sequencing
+
+1. strict tool contracts
+2. resources/prompts
+3. tracing/evals
+4. memory adapters
+5. human approval controls
+
+This order front-loads interoperability + reliability before higher-level workflow features.

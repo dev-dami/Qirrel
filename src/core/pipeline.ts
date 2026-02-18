@@ -19,6 +19,7 @@ import type { PipelineComponent, EventHandler } from "./types";
 import { PipelineEvent } from "./Events";
 import { ConfigLoader } from "../config/loader";
 import type { MiniparseConfig } from "../config/defaults";
+import { createHash } from "crypto";
 
 export class Pipeline {
   private readonly components: PipelineComponent[] = [];
@@ -337,14 +338,8 @@ export class Pipeline {
    * Generate a cache key for the given text
    */
   private generateCacheKey(text: string): string {
-    // Create a simple hash of the text content
-    let hash = 0;
-    for (let i = 0; i < text.length; i++) {
-      const char = text.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash |= 0; // Convert to 32bit integer
-    }
-    return `pipeline_result_${Math.abs(hash).toString(36)}`;
+    const digest = createHash("sha256").update(text).digest("hex");
+    return `pipeline_result_${digest}`;
   }
 
   private cloneContext(context: QirrelContext): QirrelContext {

@@ -19,4 +19,14 @@ describe('Pipeline cache isolation', () => {
 
     expect(hasInjectedEntity).toBe(false);
   });
+
+  test('should not return a cached result for a different input that collides in hash', async () => {
+    const pipeline = new Pipeline();
+
+    const first = await pipeline.process('Aa');
+    const second = await pipeline.process('BB');
+
+    expect(first.data?.text).toBe('Aa');
+    expect(second.data?.text).toBe('BB');
+  });
 });

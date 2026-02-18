@@ -111,21 +111,18 @@ export const extractNumbersOnly: PipelineComponent = {
 function extractEmails(inputData: { text: string; entities: Entity[] }): void {
   const text = inputData.text;
 
-  // Use validator to find and validate emails more reliably
-  // First, find potential emails using a simple pattern, then validate with library
-  const potentialEmails = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g) || [];
+  const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+  let match: RegExpExecArray | null;
 
-  for (const potentialEmail of potentialEmails) {
+  while ((match = emailPattern.exec(text)) !== null) {
+    const potentialEmail = match[0];
     if (validator.isEmail(potentialEmail)) {
-      const startIndex = text.indexOf(potentialEmail);
-      if (startIndex !== -1) {
-        inputData.entities.push({
-          type: "email",
-          value: potentialEmail,
-          start: startIndex,
-          end: startIndex + potentialEmail.length,
-        });
-      }
+      inputData.entities.push({
+        type: "email",
+        value: potentialEmail,
+        start: match.index,
+        end: match.index + potentialEmail.length,
+      });
     }
   }
 }
@@ -225,7 +222,12 @@ function extractUrls(inputData: { text: string; entities: Entity[] }): void {
   let match;
 
   while ((match = urlPattern.exec(text)) !== null) {
-    const url = match[0];
+    const matchedUrl = match[0];
+    const url = trimTrailingUrlPunctuation(matchedUrl);
+    if (!url) {
+      continue;
+    }
+
     // Use validator to properly validate the URL
     if (validator.isURL(url, { protocols: ['http', 'https'], require_protocol: true })) {
       inputData.entities.push({
@@ -236,6 +238,14 @@ function extractUrls(inputData: { text: string; entities: Entity[] }): void {
       });
     }
   }
+}
+
+function trimTrailingUrlPunctuation(value: string): string {
+  let end = value.length;
+  while (end > 0 && ".,!?;:)]}".includes(value[end - 1]!)) {
+    end--;
+  }
+  return value.slice(0, end);
 }
 
 function extractNumbers(inputData: { text: string; entities: Entity[] }): void {

@@ -1,11 +1,14 @@
 # Caching
 
-[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Basic](./basic.md) | [Events](../events.md) | [LLM](../integrations/llm.md) | [Architecture](../walkthrough.md) | [Agent-Native](../agent-native.md)
+[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Basic](./basic.md) | [Events](../events.md) | [LLM](../integrations/llm.md) | [Architecture](../walkthrough.md) | [Agent-Native](../agent-native.md) | [Benchmarks](../benchmarks.md) | [Ecosystem](../ecosystem-comparison.md)
 
-Qirrel caching is enabled by default and improves repeat-processing performance at two levels:
+Qirrel uses LRU + TTL caching to reduce repeated work.
 
-1. Pipeline result cache (`Pipeline.process` / `Pipeline.processBatch`)
-2. Cacheable processor wrappers inside the default pipeline
+## Cache Layers
+
+1. Pipeline result cache (`Pipeline.process` and `Pipeline.processBatch`).
+2. Component-level cache wrappers for cacheable processors.
+3. LLM response cache in adapter implementations.
 
 ## Configure Cache
 
@@ -15,57 +18,35 @@ cache:
   ttl: 300000
 ```
 
-- `maxEntries`: maximum entries in LRU cache.
-- `ttl`: cache lifetime in milliseconds.
-- Set `maxEntries: 0` to disable caching.
+- `maxEntries`: max entries before LRU eviction.
+- `ttl`: entry lifetime in milliseconds.
+- Set `maxEntries: 0` to disable cache globally.
 
-## Basic Usage
-
-```ts
-import { Pipeline } from 'qirrel';
-
-const pipeline = new Pipeline();
-
-const first = await pipeline.process('hello@example.com');
-const second = await pipeline.process('hello@example.com');
-
-console.log(first.data?.entities);
-console.log(second.data?.entities);
-```
-
-## Manual Cache Access
+## Runtime API
 
 ```ts
 import { Pipeline } from 'qirrel';
 
 const pipeline = new Pipeline();
-const input = 'cached input';
+const input = 'hello@example.com';
 
-if (!pipeline.isCached(input)) {
-  await pipeline.process(input);
-}
+await pipeline.process(input);
 
-const cached = pipeline.getCached(input);
-console.log(cached?.data?.entities);
+console.log(pipeline.isCached(input));
+console.log(pipeline.getCached(input)?.data?.entities ?? []);
+
+pipeline.setCached(input, { data: { text: input, tokens: [], entities: [] } });
 ```
 
-## Cache Manager API
+## Cache Keys and Safety Notes
 
-```ts
-import { Pipeline } from 'qirrel';
+- Pipeline result keys are SHA-256 based on raw input text.
+- Component caches use stable hashed keys from component name + relevant context fields.
+- Cached contexts are cloned on set/get to avoid cross-request mutation leakage.
 
-const pipeline = new Pipeline();
-const cache = pipeline.getCacheManager();
+## LLM Cache
 
-cache.set('custom:key', { sample: true }, 60_000);
-console.log(cache.get('custom:key'));
-console.log(cache.has('custom:key'));
-console.log(cache.size(), cache.maxSize());
-```
-
-## LLM Cache Notes
-
-LLM adapters also support response caching. Relevant fields:
+For adapter-level response caching:
 
 ```yaml
 llm:
@@ -73,12 +54,18 @@ llm:
   timeout: 30000
 ```
 
-- `cacheTtl` controls cached response lifetime.
-- `timeout` controls request timeout.
+Provider behavior currently differs:
+- OpenAI adapter implements explicit cache read/write in the adapter.
+- Generic and Gemini adapters cache through shared base adapter logic.
 
-## Best Practices
+## Throughput Tuning
 
-- Reuse `Pipeline` instances for repeated calls.
-- Tune `ttl` by freshness needs.
-- Disable cache (`maxEntries: 0`) for highly dynamic data.
-- Use `processBatch(..., { concurrency })` with cache for high-throughput workloads.
+- Reuse one `Pipeline` instance per process/service worker.
+- Prefer `processBatch(..., { concurrency })` for bounded parallelism.
+- Tune `ttl` by freshness requirements.
+
+## Common Pitfalls
+
+- Disabling cache in config affects both result and component-level cache wrapping.
+- Recreating `Pipeline` for every request resets cache and eliminates most cache benefit.
+- High concurrency with very low TTL may still miss cache frequently.

@@ -1,8 +1,8 @@
 # Pipeline Events
 
-[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md)
+[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md) | [Agent-Native](./agent-native.md) | [Benchmarks](./benchmarks.md) | [Ecosystem](./ecosystem-comparison.md)
 
-Qirrel exposes lifecycle events on `Pipeline` so you can monitor execution, collect metrics, and handle failures without modifying core processors.
+`Pipeline` emits lifecycle events so you can instrument runs without modifying processors.
 
 ## Event Names
 
@@ -11,9 +11,9 @@ Qirrel exposes lifecycle events on `Pipeline` so you can monitor execution, coll
 - `PipelineEvent.ProcessorStart` (`processor.start`)
 - `PipelineEvent.ProcessorEnd` (`processor.end`)
 - `PipelineEvent.Error` (`error`)
-- `PipelineEvent.LLMCall` (`llm.call`, reserved for LLM-specific instrumentation)
+- `PipelineEvent.LLMCall` (`llm.call`, currently reserved)
 
-## Subscribe and Unsubscribe
+## Subscribe/Unsubscribe
 
 ```ts
 import { Pipeline, PipelineEvent } from 'qirrel';
@@ -25,13 +25,11 @@ const onRunStart = ({ context }: any) => {
 };
 
 pipeline.on(PipelineEvent.RunStart, onRunStart);
-
 await pipeline.process('Contact support@example.com');
-
 pipeline.off(PipelineEvent.RunStart, onRunStart);
 ```
 
-## Typical Payload Shapes
+## Payload Contracts
 
 ### `RunStart`
 
@@ -63,13 +61,12 @@ pipeline.off(PipelineEvent.RunStart, onRunStart);
 { error: Error, context?: QirrelContext, stage?: 'run' | 'processor' | 'llm' }
 ```
 
-## Production Notes
+## Error Semantics
 
-- Event handlers run inside pipeline execution. Keep handlers lightweight.
-- Handler failures are logged and do not stop pipeline execution.
-- Use `duration` from `RunEnd` and `ProcessorEnd` for latency metrics.
+- If an event handler throws, Qirrel logs the handler error and continues pipeline execution.
+- If a processor throws during `process`, Qirrel emits `PipelineEvent.Error` and rethrows.
 
-## Metrics Example
+## Metrics Pattern
 
 ```ts
 import { Pipeline, PipelineEvent } from 'qirrel';
@@ -83,6 +80,10 @@ pipeline.on(PipelineEvent.ProcessorEnd, ({ processorName, duration }: any) => {
 pipeline.on(PipelineEvent.Error, ({ error, stage }: any) => {
   console.error(`[metric] stage=${stage ?? 'unknown'} error=${error.message}`);
 });
-
-await pipeline.process('Visit https://example.com and call +1 415 555 2671');
 ```
+
+## Operational Guidance
+
+- Keep handlers lightweight; handlers execute inside the request path.
+- Avoid blocking I/O in high-volume paths.
+- Prefer async fire-and-forget queueing if your telemetry backend is slow.
