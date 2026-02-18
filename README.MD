@@ -105,17 +105,15 @@ This repository includes GitHub Actions workflows:
 
 ## Documentation
 
-- [Docs Home (Styled)](./docs/index.html)
-- [API Reference](./docs/pages/api.html)
-- [Configuration Guide](./docs/pages/configuration.html)
-- [Usage Examples](./docs/pages/examples.html)
-- [Basic Usage](./docs/pages/basic.html)
-- [Caching](./docs/pages/caching.html)
-- [Pipeline Events](./docs/pages/events.html)
-- [LLM Integration](./docs/pages/llm.html)
-- [Architecture Walkthrough](./docs/pages/walkthrough.html)
-
-Markdown source docs are still available under `./docs/`.
+- [Docs Home](./docs/README.md)
+- [API Reference](./docs/api.md)
+- [Configuration Guide](./docs/configuration.md)
+- [Usage Examples](./docs/examples.md)
+- [Basic Usage](./docs/usage/basic.md)
+- [Caching](./docs/usage/caching.md)
+- [Pipeline Events](./docs/events.md)
+- [LLM Integration](./docs/integrations/llm.md)
+- [Architecture Walkthrough](./docs/walkthrough.md)
 
 ## Contributing
 

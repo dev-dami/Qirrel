@@ -1,5 +1,7 @@
 # API Reference
 
+[Docs Home](./README.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+
 ## Top-Level Functions
 
 ### `processText(text, configPath?)`

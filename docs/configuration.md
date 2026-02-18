@@ -1,5 +1,7 @@
 # Configuration Guide
 
+[Docs Home](./README.md) | [API](./api.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+
 Qirrel loads config in this order:
 
 1. Custom path passed to `new Pipeline(configPath)`

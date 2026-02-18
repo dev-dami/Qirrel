@@ -1,5 +1,7 @@
 # Architecture Walkthrough
 
+[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md)
+
 This document explains how Qirrel processes input text from start to finish.
 
 ## End-to-End Flow

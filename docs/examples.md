@@ -1,5 +1,7 @@
 # Usage Examples
 
+[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+
 ## Single Input
 
 ```ts

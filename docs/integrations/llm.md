@@ -1,5 +1,7 @@
 # LLM Integration
 
+[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Basic](../usage/basic.md) | [Caching](../usage/caching.md) | [Events](../events.md) | [Architecture](../walkthrough.md)
+
 Qirrel supports pluggable LLM adapters (`gemini`, `openai`, and generic OpenAI-compatible endpoints).
 
 ## Install

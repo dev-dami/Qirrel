@@ -1,5 +1,7 @@
 # Caching
 
+[Docs Home](../README.md) | [API](../api.md) | [Configuration](../configuration.md) | [Examples](../examples.md) | [Basic](./basic.md) | [Events](../events.md) | [LLM](../integrations/llm.md) | [Architecture](../walkthrough.md)
+
 Qirrel caching is enabled by default and improves repeat-processing performance at two levels:
 
 1. Pipeline result cache (`Pipeline.process` / `Pipeline.processBatch`)

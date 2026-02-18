@@ -1,5 +1,7 @@
 # Pipeline Events
 
+[Docs Home](./README.md) | [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md) | [Basic](./usage/basic.md) | [Caching](./usage/caching.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
+
 Qirrel exposes lifecycle events on `Pipeline` so you can monitor execution, collect metrics, and handle failures without modifying core processors.
 
 ## Event Names

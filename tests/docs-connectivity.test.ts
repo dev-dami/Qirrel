@@ -2,76 +2,84 @@ import fs from "node:fs";
 import path from "node:path";
 
 const docsRoot = path.resolve(__dirname, "..", "docs");
-const pagesDir = path.join(docsRoot, "pages");
+const repoRoot = path.resolve(__dirname, "..");
 
-const topicPages = [
-  "api.html",
-  "basic.html",
-  "caching.html",
-  "configuration.html",
-  "events.html",
-  "examples.html",
-  "llm.html",
-  "walkthrough.html",
+const topicDocs = [
+  "api.md",
+  "configuration.md",
+  "examples.md",
+  "events.md",
+  "walkthrough.md",
+  "usage/basic.md",
+  "usage/caching.md",
+  "integrations/llm.md",
 ];
 
 function readFile(relativePath: string): string {
-  return fs.readFileSync(path.join(docsRoot, relativePath), "utf8");
+  return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
 }
 
-function extractHrefs(html: string): string[] {
-  const hrefs: string[] = [];
-  const pattern = /href="([^"]+)"/g;
+function extractMarkdownLinks(markdown: string): string[] {
+  const links: string[] = [];
+  const pattern = /\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
 
-  for (const match of html.matchAll(pattern)) {
+  for (const match of markdown.matchAll(pattern)) {
     if (match[1]) {
-      hrefs.push(match[1]);
+      links.push(match[1]);
     }
   }
 
-  return hrefs;
+  return links;
 }
 
 describe("docs connectivity", () => {
-  test("docs index links to each topic page", () => {
-    const hrefs = extractHrefs(readFile("index.html"));
-    for (const page of topicPages) {
-      expect(hrefs).toContain(`./pages/${page}`);
+  test("root README points to markdown docs", () => {
+    const links = extractMarkdownLinks(readFile("README.MD"));
+
+    expect(links).toContain("./docs/README.md");
+    for (const doc of topicDocs) {
+      expect(links).toContain(`./docs/${doc}`);
     }
   });
 
-  test("every topic page links to docs hub, root README, and all topic pages", () => {
-    for (const page of topicPages) {
-      const hrefs = extractHrefs(readFile(path.join("pages", page)));
+  test("docs home links to each markdown topic page", () => {
+    const links = extractMarkdownLinks(readFile("docs/README.md"));
 
-      expect(hrefs).toContain("../index.html");
-      expect(hrefs).toContain("../../README.MD");
-
-      for (const linkedPage of topicPages) {
-        expect(hrefs).toContain(`./${linkedPage}`);
-      }
+    for (const doc of topicDocs) {
+      expect(links).toContain(`./${doc}`);
     }
   });
 
-  test("all local links resolve to an existing file", () => {
-    const htmlFiles = [
-      "index.html",
-      ...fs
-        .readdirSync(pagesDir)
-        .filter((file) => file.endsWith(".html"))
-        .map((file) => path.join("pages", file)),
+  test("every docs page links back to docs home", () => {
+    for (const doc of topicDocs) {
+      const links = extractMarkdownLinks(readFile(path.join("docs", doc)));
+
+      expect(
+        links.includes("./README.md") || links.includes("../README.md"),
+      ).toBe(true);
+    }
+  });
+
+  test("all local markdown links in docs resolve to an existing file", () => {
+    const markdownFiles = [
+      "docs/README.md",
+      ...topicDocs.map((doc) => path.join("docs", doc)),
     ];
 
-    for (const htmlFile of htmlFiles) {
-      const html = readFile(htmlFile);
-      const hrefs = extractHrefs(html);
+    for (const markdownFile of markdownFiles) {
+      const markdown = readFile(markdownFile);
+      const links = extractMarkdownLinks(markdown);
 
-      for (const href of hrefs) {
-        if (href.startsWith("http://") || href.startsWith("https://")) {
+      for (const link of links) {
+        if (
+          link.startsWith("http://") ||
+          link.startsWith("https://") ||
+          link.startsWith("#")
+        ) {
           continue;
         }
 
-        const resolved = path.resolve(path.join(docsRoot, htmlFile, ".."), href);
+        const resolved = path.resolve(path.join(repoRoot, markdownFile, ".."), link);
         expect(fs.existsSync(resolved)).toBe(true);
       }
     }

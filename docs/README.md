@@ -1,5 +1,21 @@
-# Qirrel Docs Site
+# Qirrel Documentation
 
-Open `docs/index.html` for the styled docs experience with custom classes, spacing utilities, and motion.
+GitHub-first Markdown docs for Qirrel.
 
-Legacy markdown docs remain in this folder for source/reference compatibility.
+## Start Here
+
+- [Project README](../README.MD)
+- [API Reference](./api.md)
+- [Configuration Guide](./configuration.md)
+- [Usage Examples](./examples.md)
+- [Basic Usage](./usage/basic.md)
+- [Caching](./usage/caching.md)
+- [Pipeline Events](./events.md)
+- [LLM Integration](./integrations/llm.md)
+- [Architecture Walkthrough](./walkthrough.md)
+
+## Quick Navigation
+
+- Core: [API](./api.md) | [Configuration](./configuration.md) | [Examples](./examples.md)
+- Usage: [Basic](./usage/basic.md) | [Caching](./usage/caching.md)
+- Advanced: [Events](./events.md) | [LLM](./integrations/llm.md) | [Architecture](./walkthrough.md)
