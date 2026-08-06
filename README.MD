@@ -130,9 +130,25 @@ Add to your `claude_desktop_config.json`:
 
 Exposed MCP Tools:
 - `qirrel.parse_text`: Complete pipeline parsing (tokens, entities, metadata).
-- `qirrel.clean_text`: Standard text cleaning & normalization.
-- `qirrel.extract_entities`: Fast regex entity extraction.
-- `qirrel.speech_clean`: Voice-to-text transcript cleanup.
+- `qirrel.parse_batch`: Parallel batch text processing.
+- `qirrel.speech_clean`: Voice-to-text transcript cleanup (strips filler words, stutters, repetitions).
+- `qirrel.capabilities`: Feature profile and tool self-discovery.
+- `qirrel.tool_help`: Interactive tool discovery for LLM planners.
+
+### Copy-Paste System Prompt for AI Agents
+
+Paste this prompt into your agent's system instructions (e.g. `.cursorrules`, Claude Custom Instructions, or System Prompt):
+
+```text
+You have access to Qirrel MCP tools for fast, zero-token local text processing, entity extraction, and transcript cleaning.
+
+When processing user input, raw text, customer messages, or voice transcripts:
+1. BEFORE calling an LLM for simple extraction, use `qirrel.parse_text` to extract emails, phone numbers, URLs, and numbers deterministically with 0ms latency and 0 token cost.
+2. For audio/voice transcripts with spoken fillers ("um", "uh", "you know"), stutters, or duplicate words, call `qirrel.speech_clean` to sanitize the transcript before generating responses.
+3. For multiple text inputs, use `qirrel.parse_batch` with optional concurrency.
+4. If you need details on available tool arguments or schemas, call `qirrel.tool_help` or `qirrel.capabilities`.
+```
+
 
 ---
 

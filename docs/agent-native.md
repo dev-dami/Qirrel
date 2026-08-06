@@ -57,8 +57,22 @@ Optional config path argument:
 
 ```bash
 qirrel-mcp ./qirrel.config.yaml
-
 ```
+
+## Copy-Paste System Prompt for AI Agents
+
+Paste this prompt into your AI Agent's system instructions (`.cursorrules`, Claude Custom Instructions, or Agent System Prompt):
+
+```text
+You have access to Qirrel MCP tools for fast, zero-token local text processing, entity extraction, and transcript cleaning.
+
+When processing user input, raw text, customer messages, or voice transcripts:
+1. BEFORE calling an external LLM for simple entity extraction, use `qirrel.parse_text` to extract emails, phone numbers, URLs, and numbers deterministically with 0ms latency and 0 token cost.
+2. For audio/voice transcripts containing spoken fillers ("um", "uh", "you know"), stutters, or duplicate words, call `qirrel.speech_clean` to sanitize the transcript before generating responses.
+3. For multiple text inputs, use `qirrel.parse_batch` with optional concurrency.
+4. If you need details on available tool arguments or schemas, call `qirrel.tool_help` or `qirrel.capabilities`.
+```
+
 
 ## MCP Handler Behavior (Current)
 
