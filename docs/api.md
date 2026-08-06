@@ -75,7 +75,8 @@ See [Events](./events.md) for payload contracts and error behavior.
 
 ### Cache and Config Access
 
-- `getConfig(): MiniparseConfig`
+- `getConfig(): QirrelConfig`
+
 - `getLLMAdapter(): LLMAdapter | undefined`
 - `getCacheManager(): LruCacheManager`
 - `isCached(text: string): boolean`

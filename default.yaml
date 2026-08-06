@@ -3,6 +3,8 @@ pipeline:
   enableCleaning: true
   enableExtraction: true
   enableSegmentation: true
+  enableSpeechClean: false
+
 
 tokenizer:
   lowercase: true

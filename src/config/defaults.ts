@@ -1,12 +1,13 @@
 import type { PipelineComponent } from "../core/types";
 
-export interface MiniparseConfig {
+export interface QirrelConfig {
   pipeline: {
     enableNormalization: boolean;
     enableCleaning: boolean;
     enableExtraction: boolean;
     enableSegmentation: boolean;
     enableAdvCleaning: boolean;
+    enableSpeechClean?: boolean;
   };
   tokenizer: {
     lowercase: boolean;
@@ -40,13 +41,17 @@ export interface MiniparseConfig {
   };
 }
 
-export const defaultConfig: MiniparseConfig = {
+/** Backward compatibility type alias */
+export type MiniparseConfig = QirrelConfig;
+
+export const defaultConfig: QirrelConfig = {
   pipeline: {
     enableNormalization: true,
     enableCleaning: true,
     enableExtraction: true,
     enableSegmentation: true,
     enableAdvCleaning: false,
+    enableSpeechClean: false,
   },
   tokenizer: {
     lowercase: true,
@@ -73,3 +78,4 @@ export const defaultConfig: MiniparseConfig = {
     cacheTtl: 300000,
   },
 };
+

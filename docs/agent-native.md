@@ -54,7 +54,8 @@ qirrel-mcp
 Optional config path argument:
 
 ```bash
-qirrel-mcp ./miniparse.config.yaml
+qirrel-mcp ./qirrel.config.yaml
+
 ```
 
 ## MCP Handler Behavior (Current)

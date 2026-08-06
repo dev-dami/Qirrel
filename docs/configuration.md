@@ -8,10 +8,10 @@ This page documents config loading order, schema, defaults, and production cavea
 
 Qirrel loads config in this order:
 
-1. Custom path passed to `new Pipeline(configPath)` when that path exists.
-2. `./miniparse.config.yaml` in current working directory.
-3. Repository-root `default.yaml`.
-4. In-code defaults from `src/config/defaults.ts`.
+1. Explicit path passed to `new Pipeline('/path/to/config.yaml')`.
+2. `./qirrel.config.yaml` in current working directory (or `./miniparse.config.yaml` as legacy fallback).
+3. Root `default.yaml` bundled with package.
+4. Hardcoded defaults in `src/config/defaults.ts`.
 
 If a file fails to parse, Qirrel logs a warning and falls back to in-code defaults.
 

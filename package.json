@@ -1,7 +1,7 @@
 {
   "name": "qirrel",
   "version": "0.2.1",
-  "description": "Qirrel is a sophisticated and extensible NLP library for comprehensive text processing, tokenization, and analysis.",
+  "description": "Fast, deterministic NLP entity extraction and transcript cleaning pipeline with LLM adapters and MCP server support for AI Agents.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -29,12 +29,15 @@
   "keywords": [
     "nlp",
     "text-processing",
-    "tokenizer",
-    "parsing",
-    "natural-language-processing",
-    "text-analysis",
+    "entity-extraction",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "llm",
+    "transcript-cleaning",
     "typescript"
   ],
+
   "author": "Damilare Osibanjo",
   "license": "MIT",
   "type": "commonjs",

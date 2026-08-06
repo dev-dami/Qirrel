@@ -1,10 +1,11 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import { defaultConfig, type MiniparseConfig } from "./defaults";
+import { defaultConfig, type QirrelConfig } from "./defaults";
 
 export class ConfigLoader {
-  private static readonly CONFIG_FILE_NAME = "miniparse.config.yaml";
+  private static readonly PRIMARY_CONFIG_FILE_NAME = "qirrel.config.yaml";
+  private static readonly LEGACY_CONFIG_FILE_NAME = "miniparse.config.yaml";
   private static readonly DEFAULT_CONFIG_FILE_NAME = "default.yaml";
   private static readonly ENV_API_KEY_CANDIDATES = [
     "QIRREL_LLM_API_KEY",
@@ -13,14 +14,19 @@ export class ConfigLoader {
     "GEMINI_API_KEY",
   ];
 
-  public static loadConfig(customConfigPath?: string): MiniparseConfig {
+  public static loadConfig(customConfigPath?: string): QirrelConfig {
     if (customConfigPath && fs.existsSync(customConfigPath)) {
       return this.loadConfigFromFile(customConfigPath);
     }
 
-    const localConfigPath = path.join(process.cwd(), this.CONFIG_FILE_NAME);
-    if (fs.existsSync(localConfigPath)) {
-      return this.loadConfigFromFile(localConfigPath);
+    const primaryConfigPath = path.join(process.cwd(), this.PRIMARY_CONFIG_FILE_NAME);
+    if (fs.existsSync(primaryConfigPath)) {
+      return this.loadConfigFromFile(primaryConfigPath);
+    }
+
+    const legacyConfigPath = path.join(process.cwd(), this.LEGACY_CONFIG_FILE_NAME);
+    if (fs.existsSync(legacyConfigPath)) {
+      return this.loadConfigFromFile(legacyConfigPath);
     }
 
     const defaultConfigPath = path.join(
@@ -34,13 +40,14 @@ export class ConfigLoader {
     return this.applyEnvDefaults(JSON.parse(JSON.stringify(defaultConfig)));
   }
 
-  private static loadConfigFromFile(filePath: string): MiniparseConfig {
+  private static loadConfigFromFile(filePath: string): QirrelConfig {
     try {
       const fileContent = fs.readFileSync(filePath, "utf-8");
 
       const configObject = this.resolveEnvPlaceholders(
-        yaml.load(fileContent) as Partial<MiniparseConfig>,
+        yaml.load(fileContent) as Partial<QirrelConfig>,
       );
+
 
       if (configObject === null || typeof configObject !== "object") {
         throw new Error("YAML file did not contain a valid object");
@@ -54,14 +61,15 @@ export class ConfigLoader {
   }
 
   private static mergeConfigWithDefaults(
-    partialConfig: Partial<MiniparseConfig>,
-  ): MiniparseConfig {
+    partialConfig: Partial<QirrelConfig>,
+  ): QirrelConfig {
     const config: any = JSON.parse(JSON.stringify(defaultConfig));
 
     this.deepMerge(config, partialConfig);
 
-    return config as MiniparseConfig;
+    return config as QirrelConfig;
   }
+
 
   private static deepMerge(target: any, source: any): void {
     for (const key in source) {
@@ -113,8 +121,9 @@ export class ConfigLoader {
     );
   }
 
-  private static applyEnvDefaults(config: MiniparseConfig): MiniparseConfig {
-    const resolvedConfig = JSON.parse(JSON.stringify(config)) as MiniparseConfig;
+  private static applyEnvDefaults(config: QirrelConfig): QirrelConfig {
+    const resolvedConfig = JSON.parse(JSON.stringify(config)) as QirrelConfig;
+
     const envApiKey = this.findEnvApiKey();
     if (resolvedConfig.llm?.enabled && !resolvedConfig.llm.apiKey && envApiKey) {
       resolvedConfig.llm.apiKey = envApiKey;

@@ -1,6 +1,8 @@
 import { processText, processTexts } from "../api";
+import { preprocessSpeechInput } from "../adapters/speech";
 import { AgentBridge } from "./bridge";
 import type { AgentToolDefinition } from "./types";
+
 
 interface ParseTextArgs {
   text: string;
@@ -36,6 +38,7 @@ export function createQirrelAgentBridge(defaultConfigPath?: string): AgentBridge
     toolNames: [
       "qirrel.parse_text",
       "qirrel.parse_batch",
+      "qirrel.speech_clean",
       "qirrel.tool_help",
       "qirrel.capabilities",
     ],
@@ -76,6 +79,38 @@ export function createQirrelAgentBridge(defaultConfigPath?: string): AgentBridge
       },
     ],
     tags: ["qirrel", "parse", "entities"],
+  };
+
+  const speechCleanDefinition: AgentToolDefinition = {
+    name: "qirrel.speech_clean",
+    description: "Clean voice-to-text transcript by removing filler words, stutters, and repetitions",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        text: { type: "string", description: "Raw transcript text to clean" },
+        removeFillerWords: { type: "boolean", description: "Remove filler words like 'um', 'uh', 'you know'" },
+        detectRepetitions: { type: "boolean", description: "Remove duplicate phrase repetitions" },
+        findStutters: { type: "boolean", description: "Normalize stuttered words like 't-t-today'" },
+      },
+      required: ["text"],
+    },
+    annotations: {
+      title: "Speech Clean",
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+    examples: [
+      {
+        title: "Clean STT transcript",
+        arguments: {
+          text: "Um, hello! I need help t-t-today, you know.",
+        },
+      },
+    ],
+    tags: ["qirrel", "speech", "clean"],
   };
 
   const parseBatchDefinition: AgentToolDefinition = {
@@ -136,6 +171,35 @@ export function createQirrelAgentBridge(defaultConfigPath?: string): AgentBridge
       );
     },
   );
+
+  bridge.registerTool(
+    speechCleanDefinition,
+    async (args: any) => {
+      if (typeof args?.text !== "string") {
+        throw new TypeError("qirrel.speech_clean expects a string 'text' argument");
+      }
+      const cleaned = preprocessSpeechInput(args.text, {
+        removeFillerWords: args.removeFillerWords,
+        detectRepetitions: args.detectRepetitions,
+        findStutters: args.findStutters,
+      });
+
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: cleaned,
+          },
+        ],
+        structuredContent: {
+          rawText: args.text,
+          cleanedText: cleaned,
+        },
+      };
+    },
+  );
+
 
   bridge.registerApiTool<ParseBatchArgs>(
     parseBatchDefinition,

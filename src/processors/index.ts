@@ -3,3 +3,5 @@ export { extract, extractEmailsOnly, extractPhonesOnly, extractUrlsOnly, extract
 export { normalize } from "./normalize";
 export { segment } from "./segment";
 export { advClean } from "./advclean";
+export { speechClean } from "./speech";
+

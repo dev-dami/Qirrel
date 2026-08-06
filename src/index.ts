@@ -7,6 +7,7 @@ export * from "./adapters";
 export * from "./llms";
 export * from "./agent";
 export type { Entity, QirrelContext } from "./types";
-export type { MiniparseConfig } from "./config/defaults";
+export type { QirrelConfig, MiniparseConfig } from "./config/defaults";
+
 export { ConfigLoader } from "./config/loader";
 export * from "./api";

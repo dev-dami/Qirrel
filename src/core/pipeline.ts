@@ -11,6 +11,7 @@ import {
   extractUrlsOnly,
   extractNumbersOnly,
   advClean,
+  speechClean,
 } from "../processors";
 import { LLMAdapterFactory } from "../llms";
 import type { LLMAdapter } from "../llms";
@@ -18,13 +19,13 @@ import { createQirrelContext, type Entity, type QirrelContext } from "../types";
 import type { PipelineComponent, EventHandler } from "./types";
 import { PipelineEvent } from "./Events";
 import { ConfigLoader } from "../config/loader";
-import type { MiniparseConfig } from "../config/defaults";
+import type { QirrelConfig } from "../config/defaults";
 import { createHash } from "crypto";
 
 export class Pipeline {
   private readonly components: PipelineComponent[] = [];
   private readonly tokenizer: Tokenizer;
-  private readonly config: MiniparseConfig;
+  private readonly config: QirrelConfig;
   private readonly cacheManager: LruCacheManager;
   private llmAdapter?: LLMAdapter;
   private llmInitPromise: Promise<void> | null = null;
@@ -46,6 +47,9 @@ export class Pipeline {
     this.cacheManager = new LruCacheManager(cacheOptions);
 
     // Conditionally add components with caching
+    if (this.config.pipeline.enableSpeechClean) {
+      this.use(this.wrapComponentWithCache(speechClean(this.config.speech)));
+    }
     if (this.config.pipeline.enableNormalization) this.use(this.wrapComponentWithCache(normalize));
     if (this.config.pipeline.enableCleaning) this.use(this.wrapComponentWithCache(clean));
     if (this.config.pipeline.enableAdvCleaning) this.use(this.wrapComponentWithCache(advClean));
@@ -58,6 +62,7 @@ export class Pipeline {
     }
 
     if (this.config.pipeline.enableSegmentation) this.use(this.wrapComponentWithCache(segment));
+
 
     // Initialize LLM adapter if LLM functionality is enabled
     if (this.config.llm?.enabled && this.config.llm.apiKey) {
@@ -229,9 +234,10 @@ export class Pipeline {
     }
   }
 
-  public getConfig(): MiniparseConfig {
+  public getConfig(): QirrelConfig {
     return this.config;
   }
+
 
   public addCustomProcessor(component: PipelineComponent): this {
     this.components.push(component);

@@ -2,142 +2,198 @@
 
 <div align="center">
 
-**TypeScript NLP pipeline for fast, structured text understanding**
+**Deterministic NLP Pipeline, Speech Preprocessor & Agent-Native Tooling for TypeScript**
 
 [![CI](https://github.com/dev-dami/Qirrel/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-dami/Qirrel/actions/workflows/ci.yml)
 [![CD](https://github.com/dev-dami/Qirrel/actions/workflows/release.yml/badge.svg)](https://github.com/dev-dami/Qirrel/actions/workflows/release.yml)
 [![NPM Version](https://img.shields.io/npm/v/qirrel.svg)](https://www.npmjs.com/package/qirrel)
-[![NPM Downloads](https://img.shields.io/npm/dm/qirrel.svg)](https://www.npmjs.com/package/qirrel)
 [![License](https://img.shields.io/npm/l/qirrel.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-[GitHub](https://github.com/dev-dami/Qirrel) · [NPM](https://www.npmjs.com/package/qirrel) · Author: [Damilare Osibanjo](https://github.com/dev-dami)
+[GitHub](https://github.com/dev-dami/Qirrel) · [NPM](https://www.npmjs.com/package/qirrel) · [Documentation](./docs/README.md)
 
 </div>
 
-## Why Qirrel
+---
 
-Qirrel gives you a production-ready pipeline for extracting structure from raw text:
+## What is Qirrel?
 
-- Tokenization with positional metadata.
-- Rule-based extraction for email, phone, URL, and number entities.
-- Optional LLM enrichment via adapter pattern.
-- Built-in caching and lifecycle events.
-- Batch processing with controllable concurrency.
+**Qirrel** is a high-speed, deterministic text-processing framework designed for modern AI applications, speech interfaces, and LLM agent toolchains.
 
-## Install
+Instead of routing every string manipulation through expensive, high-latency LLM calls, Qirrel provides a **hybrid local-first pipeline**:
+
+1. **Zero-Token Local Extraction**: High-speed, deterministic entity parsing for emails, phone numbers, URLs, and numeric data with 0ms LLM latency.
+2. **Speech & Audio Transcript Preprocessing**: Strip verbal filler words ("um", "uh", "you know"), stutter patterns, and duplicates from STT output before feeding downstream AI.
+3. **Model Context Protocol (MCP) Server**: Native `qirrel-mcp` binary exposing parsing tools over STDIO for AI Assistants (Cursor, Claude Desktop, Gemini CLI).
+4. **LLM Enrichment & Fallbacks**: Adapter layer for Gemini, OpenAI, or generic REST models when deterministic rules require semantic reasoning.
+
+---
+
+## Quickstart
+
+### Installation
 
 ```bash
 bun add qirrel
+# or
+npm install qirrel
 ```
 
-## 30-Second Start
+### 1. Simple Entity Extraction (0ms Latency, 0 Tokens)
 
 ```ts
 import { processText } from 'qirrel';
 
 const result = await processText(
-  'Contact Jane at jane@example.com or +44 20 7946 0958',
+  'Reach out to Jane at jane@example.com or call +44 20 7946 0958'
 );
 
 console.log(result.data?.entities);
+/*
+[
+  { type: 'email', value: 'jane@example.com', startIndex: 21, endIndex: 37 },
+  { type: 'phone', value: '+44 20 7946 0958', startIndex: 46, endIndex: 61 }
+]
+*/
 ```
 
-## Core Features
+### 2. Speech & Transcript Preprocessing
 
-| Feature | API | Notes |
+```ts
+import { preprocessSpeechInput } from 'qirrel';
+
+const clean = preprocessSpeechInput(
+  'Um, I think, you know, we should t-t-talk today about the project.'
+);
+
+console.log(clean);
+// "I think we should talk today about the project."
+```
+
+### 3. Pipeline with Custom Config & Events
+
+```ts
+import { Pipeline, PipelineEvent } from 'qirrel';
+
+const pipeline = new Pipeline('./qirrel.config.yaml');
+
+pipeline.on(PipelineEvent.ProcessorEnd, ({ processorName, duration }) => {
+  console.log(`[Telemetry] ${processorName} took ${duration}ms`);
+});
+
+const context = await pipeline.process('Meeting at 3PM. Details: https://meet.example.com/xyz');
+console.log(context.data?.entities);
+```
+
+---
+
+## Core Capabilities Matrix
+
+| Feature | Function / API | Description |
 | --- | --- | --- |
-| Single-text processing | `processText(text)` | Returns `QirrelContext` |
-| Batch processing | `processTexts(texts, configPath?, { concurrency })` | Keeps input order |
-| Custom pipeline | `new Pipeline(configPath?)` | Add processors and hooks |
-| Events | `pipeline.on(PipelineEvent.*, handler)` | Run/processor/error telemetry |
-| Caching | `pipeline.isCached/getCached/setCached` | LRU + TTL |
-| LLM adapter | `pipeline.getLLMAdapter()` | `gemini`, `openai`, `generic` |
+| **Entity Extraction** | `extract(context)` | Rule-based extraction of email, phone, URL, and numbers |
+| **Speech Preprocessor** | `preprocessSpeechInput(text)` / `speechClean()` | Removes filler words, stutters, and word repetitions |
+| **Sentence Segmentation** | `segment(context)` | Positional sentence boundary parsing |
+| **Text Normalization** | `normalize(context)` / `clean(context)` | Strips HTML, trims whitespace, standardizes punctuation |
+| **LRU Cache** | `pipeline.getCached(text)` | In-memory result caching with configurable TTL |
+| **Batch Processing** | `processTexts(texts, config?, { concurrency })` | Parallel batch parsing preserving input order |
+| **MCP Tool Server** | `bun run mcp:start` / `qirrel-mcp` | STDIO Model Context Protocol server for AI agent desktop integrations |
+| **LLM Adapter** | `pipeline.getLLMAdapter()` | Fallback adapter layer for Gemini, OpenAI, or custom APIs |
 
-## Batch Example
+---
 
-```ts
-import { processTexts } from 'qirrel';
+## Model Context Protocol (MCP) Server for AI Agents
 
-const inputs = [
-  'US: +1 415 555 2671',
-  'URL: https://example.com',
-  'Email: team@example.com',
-];
+Qirrel includes built-in MCP server capabilities so AI agents can parse text deterministically via tool calling.
 
-const outputs = await processTexts(inputs, undefined, { concurrency: 2 });
-console.log(outputs.map((o) => o.data?.entities));
+### Running the MCP Server
+
+```bash
+# Start MCP server over STDIO
+bun run mcp:start
 ```
 
-## LLM Example
+### Configuring with Claude Desktop or Cursor
 
-```ts
-import { Pipeline } from 'qirrel';
+Add to your `claude_desktop_config.json`:
 
-const pipeline = new Pipeline('./config-with-llm.yaml');
-await pipeline.init();
-
-const adapter = pipeline.getLLMAdapter();
-if (adapter) {
-  const response = await adapter.generate('Summarize: Qirrel is an NLP pipeline.');
-  console.log(response.content);
+```json
+{
+  "mcpServers": {
+    "qirrel": {
+      "command": "bunx",
+      "args": ["qirrel-mcp"]
+    }
+  }
 }
 ```
 
-## Minimal LLM Config
+Exposed MCP Tools:
+- `qirrel.parse_text`: Complete pipeline parsing (tokens, entities, metadata).
+- `qirrel.clean_text`: Standard text cleaning & normalization.
+- `qirrel.extract_entities`: Fast regex entity extraction.
+- `qirrel.speech_clean`: Voice-to-text transcript cleanup.
+
+---
+
+## Configuration (`qirrel.config.yaml`)
 
 ```yaml
+pipeline:
+  enableNormalization: true
+  enableCleaning: true
+  enableExtraction: true
+  enableSegmentation: true
+  enableSpeechClean: false
+
+tokenizer:
+  lowercase: true
+  mergeSymbols: false
+
+cache:
+  maxEntries: 1000
+  ttl: 300000 # 5 minutes
+
+speech:
+  removeFillerWords: true
+  detectRepetitions: false
+  findStutters: false
+
+extraction:
+  extractEmails: true
+  extractPhones: true
+  extractUrls: true
+  extractNumbers: true
+
 llm:
-  enabled: true
-  provider: openai
+  enabled: false
+  provider: gemini
   apiKey: ${QIRREL_LLM_API_KEY}
-  model: gpt-4o-mini
+  model: gemini-2.5-flash
   timeout: 30000
   cacheTtl: 300000
 ```
 
-## Quality Gates (CI/CD)
+---
 
-This repository includes GitHub Actions workflows:
+## Benchmarks & Framework Comparisons
 
-- `ci.yml`: runs install, build, tests, and coverage on push/PR.
-- `release.yml`: runs release checks and can publish to npm on version tags (`v*`) when `NPM_TOKEN` is configured.
-
-## Agent-Native Mode
-
-Qirrel ships with an agent-native bridge plus an MCP server so the same parsing core works for API code and agent toolchains.
-
-```ts
-import { createQirrelAgentBridge } from "qirrel";
-
-const bridge = createQirrelAgentBridge();
-const result = await bridge.callTool("qirrel.parse_text", { text: "Email me@example.com" });
-console.log(result.structuredContent);
-```
-
-Run MCP server:
+Run built-in benchmarks comparing native local parsing vs LLM wrappers:
 
 ```bash
-bun run mcp:start
-```
-
-Run benchmark:
-
-```bash
+# Benchmark Agent Bridge
 bun run bench:agent
-```
 
-Framework comparison benchmark:
-
-```bash
+# Framework Comparison
 bun run bench:frameworks
-```
 
-Generate local markdown benchmark report:
-
-```bash
+# Generate Local Benchmark Report
 bun run bench:report
 ```
+
+See the full [Framework Comparison](./docs/framework-comparison.md) and [Ecosystem Comparison](./docs/ecosystem-comparison.md).
+
+---
 
 ## Documentation
 
@@ -151,16 +207,17 @@ bun run bench:report
 - [LLM Integration](./docs/integrations/llm.md)
 - [Architecture Walkthrough](./docs/walkthrough.md)
 - [Agent-Native Integration](./docs/agent-native.md)
+- [Agent Feature Roadmap](./docs/agent-roadmap.md)
 - [Benchmarks](./docs/benchmarks.md)
 - [Benchmark Report (Local Machine)](./docs/benchmark-report.md)
 - [Framework Comparison](./docs/framework-comparison.md)
 - [Ecosystem Comparison](./docs/ecosystem-comparison.md)
-- [Agent Feature Roadmap](./docs/agent-roadmap.md)
 
-## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
+---
 
-## License
+## Contributing & License
 
-MIT. See [LICENSE](./LICENSE).
+Contributions are welcome! Please check out [CONTRIBUTING.md](./CONTRIBUTING.md) before getting started.
+
+Licensed under [MIT](./LICENSE).

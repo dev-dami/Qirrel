@@ -45,7 +45,8 @@ for (const output of results) {
 ```ts
 import { Pipeline } from 'qirrel';
 
-const pipeline = new Pipeline('./miniparse.config.yaml');
+const pipeline = new Pipeline('./qirrel.config.yaml');
+
 await pipeline.init();
 
 const output = await pipeline.process('Price is 29.99 and url is https://example.com');
