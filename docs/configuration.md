@@ -24,6 +24,7 @@ pipeline:
   enableExtraction: true
   enableSegmentation: true
   enableAdvCleaning: false
+  enableSpeechClean: false
 
 tokenizer:
   lowercase: true
@@ -64,6 +65,7 @@ llm:
 - `enableExtraction: boolean`
 - `enableSegmentation: boolean`
 - `enableAdvCleaning: boolean`
+- `enableSpeechClean: boolean`
 
 ### `tokenizer`
 
@@ -83,7 +85,8 @@ Set `maxEntries: 0` to disable caching.
 - `detectRepetitions: boolean`
 - `findStutters: boolean`
 
-Important: these fields configure speech adapter behavior for `preprocessSpeechInput` and `analyzeSpeechPatterns`; they are not automatically applied by the default pipeline unless your integration explicitly uses the speech adapter APIs.
+When `pipeline.enableSpeechClean` is `true`, the pipeline automatically executes transcript cleaning (`speechClean`) as part of `pipeline.process()`. The `speech` block configures the cleaning flags (`removeFillerWords`, `detectRepetitions`, `findStutters`). You can also call `preprocessSpeechInput` or `analyzeSpeechPatterns` directly.
+
 
 ### `extraction`
 

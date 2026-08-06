@@ -10,8 +10,10 @@ Qirrel ships an agent-native layer so the same parsing logic can be consumed as 
 - Built-in tools:
   - `qirrel.parse_text`
   - `qirrel.parse_batch`
+  - `qirrel.speech_clean`
   - `qirrel.tool_help`
   - `qirrel.capabilities`
+
 - MCP JSON-RPC request handler and stdio server (`qirrel-mcp`).
 
 ## Core Usage

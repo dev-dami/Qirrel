@@ -80,6 +80,20 @@ const result = await pipeline.process('Follow #qirrel and #nlp');
 console.log(result.data?.entities ?? []);
 ```
 
+## Speech Transcript Preprocessing
+
+```ts
+import { preprocessSpeechInput } from 'qirrel';
+
+const cleanText = preprocessSpeechInput(
+  'Um, hello! I need help, you know, with my account t-t-today.',
+  { removeFillerWords: true, detectRepetitions: true, findStutters: true }
+);
+
+console.log(cleanText);
+// "hello! I need help with my account today."
+```
+
 ## Agent Tool Call Example
 
 ```ts
@@ -93,8 +107,19 @@ const result = await bridge.callTool('qirrel.parse_text', {
 console.log(result.structuredContent);
 ```
 
+## Executable Production Scenarios
+
+Full, runnable example scripts are available in the repository root [`examples/`](../examples/):
+
+- [`1-voice-transcript-sanitizer.ts`](../examples/1-voice-transcript-sanitizer.ts): Speech-To-Text audio transcript pre-processing.
+- [`2-zero-cost-entity-prefilter.ts`](../examples/2-zero-cost-entity-prefilter.ts): High-volume customer support ticket & email lead router.
+- [`3-token-saving-prellm-pipeline.ts`](../examples/3-token-saving-prellm-pipeline.ts): Prompt token reduction & HTML payload cleaning.
+- [`4-agent-mcp-offloaded-parsing.ts`](../examples/4-agent-mcp-offloaded-parsing.ts): AI Agent tool offloading via Qirrel Agent Bridge & MCP.
+
 ## Choosing the Right Example
 
 - Start with `processText` for scripts and one-off jobs.
 - Use reusable `Pipeline` for services.
-- Use `AgentBridge`/MCP when integrating with agent runtimes.
+- Use `preprocessSpeechInput` / `speechClean` for Voice AI & STT transcript cleaning.
+- Use `AgentBridge` / MCP when integrating with agent runtimes.
+

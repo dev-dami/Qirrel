@@ -30,11 +30,13 @@ All processors read/write one shared context object:
 - config from `src/config/loader.ts`
 - defaults from `src/config/defaults.ts`
 - built-in processors in this typical order:
-  1. `normalize`
-  2. `clean`
-  3. `advClean` (optional)
-  4. extraction processors (email/phone/url/number)
-  5. `segment`
+  1. `speechClean` (optional, when `enableSpeechClean: true`)
+  2. `normalize`
+  3. `clean`
+  4. `advClean` (optional)
+  5. extraction processors (email/phone/url/number)
+  6. `segment`
+
 
 When cache is enabled and component is `cacheable`, Qirrel wraps the component with cache logic.
 
